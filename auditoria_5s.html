@@ -19,16 +19,12 @@
 }
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Barlow',sans-serif;background:var(--gris-fondo);min-height:100vh;}
-
-/* ===== LOADING ===== */
 #loading-overlay{position:fixed;inset:0;background:rgba(255,255,255,.93);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;gap:12px;}
 .spinner{width:38px;height:38px;border:4px solid var(--gris-borde);border-top-color:var(--azul-medio);border-radius:50%;animation:spin .75s linear infinite;}
 @keyframes spin{to{transform:rotate(360deg);}}
 #notif{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--azul);color:#fff;padding:10px 22px;border-radius:30px;font-size:13px;font-weight:600;box-shadow:0 8px 24px rgba(0,0,0,.25);z-index:9998;opacity:0;pointer-events:none;transition:opacity .25s;white-space:nowrap;max-width:90vw;text-align:center;}
 #notif.show{opacity:1;}
 #notif.err{background:var(--rojo);}
-
-/* ===== MODALES ===== */
 .modal-overlay{display:none;position:fixed;inset:0;z-index:5000;background:rgba(0,0,0,.65);backdrop-filter:blur(5px);align-items:center;justify-content:center;}
 .modal-overlay.abierto{display:flex;}
 .modal-box{background:#fff;border-radius:20px;padding:32px 28px;width:100%;max-width:380px;margin:20px;box-shadow:0 24px 60px rgba(0,0,0,.4);animation:popIn .2s ease;}
@@ -39,8 +35,6 @@ body{font-family:'Barlow',sans-serif;background:var(--gris-fondo);min-height:100
 .modal-sub{font-size:13px;color:var(--texto-suave);text-align:center;margin-bottom:20px;}
 .nombre-hint{font-size:13px;color:var(--azul-medio);font-weight:600;margin-top:4px;min-height:18px;}
 .modal-close-x{position:absolute;top:14px;right:18px;font-size:20px;cursor:pointer;color:var(--texto-suave);background:none;border:none;}
-
-/* ===== HEADER ===== */
 .app-header{background:linear-gradient(135deg,var(--azul) 0%,#1e40af 100%);padding:13px 20px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 4px 20px rgba(0,0,0,.3);flex-wrap:wrap;gap:8px;}
 .header-left{display:flex;align-items:center;gap:12px;}
 .header-logo{width:40px;height:40px;background:var(--amarillo);border-radius:10px;display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:16px;color:var(--azul);flex-shrink:0;}
@@ -48,16 +42,12 @@ body{font-family:'Barlow',sans-serif;background:var(--gris-fondo);min-height:100
 .header-sub{font-size:10.5px;color:rgba(255,255,255,.5);margin-top:1px;}
 .btn-admin-discreto{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:rgba(255,255,255,.6);font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:600;padding:7px 14px;border-radius:8px;cursor:pointer;letter-spacing:.5px;text-transform:uppercase;transition:.2s;}
 .btn-admin-discreto:hover{background:rgba(255,255,255,.18);color:#fff;}
-
-/* ===== LAYOUT ===== */
 .container{max-width:760px;margin:0 auto;padding:16px;}
 .card{background:#fff;border-radius:14px;padding:20px;box-shadow:0 2px 12px rgba(0,0,0,.07);margin-bottom:16px;}
 .card-titulo{font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:700;color:var(--texto);margin-bottom:14px;display:flex;align-items:center;gap:8px;}
 .registrador-banner{background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:10px;padding:10px 16px;display:flex;align-items:center;gap:10px;margin-bottom:16px;}
 .rb-label{font-size:11px;color:var(--texto-suave);font-weight:600;text-transform:uppercase;letter-spacing:.5px;}
 .rb-nombre{font-size:14px;font-weight:700;color:var(--verde);}
-
-/* ===== FORM ELEMENTS ===== */
 .campo{margin-bottom:14px;}
 .campo label{display:block;font-size:11px;font-weight:700;color:var(--texto-suave);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;}
 input[type=text],input[type=number],input[type=date],input[type=file],select,textarea{width:100%;padding:11px 14px;border:1.5px solid var(--gris-borde);border-radius:9px;font-family:'Barlow',sans-serif;font-size:14px;color:var(--texto);background:#fff;transition:.2s;}
@@ -65,8 +55,6 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azul-med
 textarea{min-height:60px;resize:vertical;}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 14px;}
 @media(max-width:560px){.grid2{grid-template-columns:1fr;}}
-
-/* ===== BUTTONS ===== */
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 22px;border:none;border-radius:10px;font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:700;letter-spacing:.5px;cursor:pointer;transition:.2s;text-transform:uppercase;}
 .btn-full{width:100%;}
 .btn-verde{background:var(--verde);color:#fff;} .btn-verde:hover{background:#15803d;}
@@ -78,8 +66,6 @@ textarea{min-height:60px;resize:vertical;}
 .btn-outline:hover{border-color:var(--azul-medio);color:var(--azul-medio);}
 .btn-sm{padding:7px 14px;font-size:12px;}
 .btn:disabled{opacity:.55;cursor:not-allowed;}
-
-/* ===== RESUMEN STICKY ===== */
 .resumen-card{position:sticky;top:0;z-index:80;background:#fff;border-radius:0 0 14px 14px;padding:12px 16px;box-shadow:0 4px 14px rgba(0,0,0,.1);margin-bottom:14px;}
 .resumen-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
 .resumen-top span:first-child{font-size:12px;font-weight:700;color:var(--texto-suave);}
@@ -90,8 +76,6 @@ textarea{min-height:60px;resize:vertical;}
 .resumen-barra-track{background:#e2e8f0;border-radius:99px;height:7px;overflow:hidden;margin:3px 0;}
 .resumen-barra-fill{height:100%;border-radius:99px;transition:width .3s;width:0%;}
 .resumen-barra-txt{font-size:10px;color:var(--texto-suave);}
-
-/* ===== PREGUNTAS ===== */
 .cat-header{background:#fff;border-left:6px solid;border-radius:10px;padding:9px 16px;margin:16px 0 10px;box-shadow:0 2px 8px rgba(0,0,0,.05);}
 .cat-header:first-child{margin-top:0;}
 .cat-badge{font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:800;padding:4px 12px;border-radius:8px;letter-spacing:.5px;text-transform:uppercase;}
@@ -104,16 +88,12 @@ textarea{min-height:60px;resize:vertical;}
 .resp-btn.resp-si.activo{background:#dcfce7;border-color:var(--verde);color:#15803d;}
 .resp-btn.resp-no.activo{background:#fee2e2;border-color:var(--rojo);color:#b91c1c;}
 .foto-preview{display:none;max-width:100%;border-radius:10px;margin-top:8px;max-height:240px;object-fit:cover;}
-
-/* ===== ACCIONES ===== */
 .acciones-wrap{margin-top:14px;border-top:1.5px dashed var(--gris-borde);padding-top:12px;}
 .acciones-wrap>label{display:block;font-size:11px;font-weight:700;color:var(--texto-suave);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;}
 .accion-row{display:grid;grid-template-columns:1.4fr 1fr 130px 36px;gap:6px;margin-bottom:8px;align-items:center;}
 .accion-row input{padding:9px 10px;font-size:13px;}
 .acc-remove{width:36px;height:36px;border-radius:8px;border:1.5px solid var(--gris-borde);background:#fee2e2;color:var(--rojo);font-weight:800;cursor:pointer;font-size:15px;}
 @media(max-width:600px){.accion-row{grid-template-columns:1fr;}}
-
-/* ===== ADMIN ===== */
 .admin-panel-outer{max-width:1300px;margin:0 auto;padding:0 16px;}
 .admin-panel-body{display:none;background:#fff;border:1.5px solid var(--gris-borde);border-radius:0 0 14px 14px;border-top:none;padding:18px;box-shadow:0 6px 16px rgba(0,0,0,.08);margin-bottom:16px;}
 .admin-panel-body.abierto{display:block;}
@@ -125,8 +105,6 @@ textarea{min-height:60px;resize:vertical;}
 .admin-seccion.activo{display:block;}
 .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
 @media(max-width:760px){.grid3{grid-template-columns:1fr;}}
-
-/* ===== FILTROS / MULTISELECT ===== */
 .filtros-bar{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:16px;align-items:end;}
 .multi-select-wrap{position:relative;}
 .multi-select-trigger{display:flex;align-items:center;justify-content:space-between;padding:9px 12px;border-radius:9px;border:1.5px solid var(--gris-borde);background:#fff;cursor:pointer;user-select:none;font-size:13px;gap:8px;}
@@ -139,22 +117,16 @@ textarea{min-height:60px;resize:vertical;}
 .ms-option:hover{background:var(--gris-fondo);}
 .ms-option input{width:15px;height:15px;accent-color:var(--azul-medio);cursor:pointer;}
 .ms-all{border-bottom:1px solid var(--gris-borde);margin-bottom:4px;font-weight:700;}
-
-/* ===== GAUGES ===== */
 .gauge-wrap{text-align:center;}
 .gauge-wrap canvas{max-height:150px;}
 .gauge-pct{font-family:'Barlow Condensed',sans-serif;font-size:26px;font-weight:900;margin-top:4px;}
 .gauges-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-bottom:16px;}
-
-/* ===== TABLAS ===== */
 .table-wrap{overflow-x:auto;border-radius:12px;border:1px solid var(--gris-borde);max-height:480px;overflow-y:auto;}
 table{width:100%;border-collapse:collapse;font-size:12.5px;}
 thead tr{background:var(--azul);color:#fff;position:sticky;top:0;}
 th,td{padding:9px 11px;text-align:left;white-space:nowrap;}
 tbody tr{border-bottom:1px solid var(--gris-borde);}
 tbody tr:hover{background:var(--gris-fondo);}
-
-/* ===== DETALLE AUDITORIA ===== */
 .detalle-pregunta{background:var(--gris-fondo);border-left:5px solid;border-radius:10px;padding:14px 16px;margin-bottom:12px;}
 .detalle-pregunta-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:6px;}
 .resp-badge{font-size:12px;font-weight:800;padding:3px 12px;border-radius:20px;}
@@ -169,6 +141,12 @@ tbody tr:hover{background:var(--gris-fondo);}
 .acc-estado{padding:3px 11px;border-radius:20px;font-weight:800;cursor:pointer;font-size:11px;text-transform:uppercase;letter-spacing:.5px;}
 .acc-estado.pendiente{background:#fef3c7;color:#92400e;}
 .acc-estado.completado{background:#dcfce7;color:#15803d;}
+.pregunta-admin-row{border:1.5px solid var(--gris-borde);border-radius:10px;padding:12px;margin-bottom:10px;background:var(--gris-fondo);}
+.pregunta-admin-row textarea{min-height:70px;margin-bottom:8px;background:#fff;}
+.pregunta-admin-controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+.pregunta-admin-controls label{font-size:11px;font-weight:700;color:var(--texto-suave);text-transform:uppercase;letter-spacing:.5px;white-space:nowrap;}
+.pregunta-admin-controls select{width:auto;flex:1;min-width:130px;}
+.pregunta-admin-empty{font-size:13px;color:var(--texto-suave);padding:6px 0 12px;}
 </style>
 </head>
 <body>
@@ -176,7 +154,6 @@ tbody tr:hover{background:var(--gris-fondo);}
 <div id="loading-overlay"><div class="spinner"></div><div id="loading-msg" style="color:var(--texto-suave);font-size:13px;">Cargando...</div></div>
 <div id="notif"></div>
 
-<!-- ===== LOGIN ===== -->
 <div class="modal-overlay abierto" id="modalLogin">
   <div class="modal-box">
     <div class="modal-icono">🧹</div>
@@ -192,7 +169,6 @@ tbody tr:hover{background:var(--gris-fondo);}
   </div>
 </div>
 
-<!-- ===== DETALLE AUDITORIA (ADMIN) ===== -->
 <div class="modal-overlay" id="modalDetalle">
   <div class="modal-box-large" style="position:relative;">
     <button class="modal-close-x" onclick="document.getElementById('modalDetalle').classList.remove('abierto')">✕</button>
@@ -202,7 +178,6 @@ tbody tr:hover{background:var(--gris-fondo);}
   </div>
 </div>
 
-<!-- ===== APP PRINCIPAL ===== -->
 <div id="appPrincipal" style="display:none">
   <div class="app-header">
     <div class="header-left">
@@ -215,18 +190,16 @@ tbody tr:hover{background:var(--gris-fondo);}
     </div>
   </div>
 
-  <!-- ===== ADMIN PANEL ===== -->
   <div class="admin-panel-outer">
     <div class="admin-panel-body" id="adminPanelBody">
-
       <div class="admin-subtabs">
         <button class="admin-subtab-btn activo" id="sub-dashboard" onclick="cambiarSubtabAdmin('dashboard')">📊 Dashboard</button>
         <button class="admin-subtab-btn" id="sub-historial" onclick="cambiarSubtabAdmin('historial')">📅 Historial</button>
         <button class="admin-subtab-btn" id="sub-acciones" onclick="cambiarSubtabAdmin('acciones')">✅ Plan de Acciones</button>
         <button class="admin-subtab-btn" id="sub-empleados" onclick="cambiarSubtabAdmin('empleados')">👥 Empleados</button>
+        <button class="admin-subtab-btn" id="sub-preguntas" onclick="cambiarSubtabAdmin('preguntas')">📝 Preguntas</button>
       </div>
 
-      <!-- DASHBOARD -->
       <div class="admin-seccion activo" id="sec-dashboard">
         <div class="filtros-bar">
           <div>
@@ -246,13 +219,11 @@ tbody tr:hover{background:var(--gris-fondo);}
           <div class="campo" style="margin-bottom:0;"><label>Hasta</label><input type="date" id="dashFechaFin" onchange="actualizarDashboard();renderHistorial()"></div>
           <button class="btn btn-outline btn-sm" onclick="limpiarFiltrosDash()">✕ Limpiar filtros</button>
         </div>
-
         <div class="card gauge-wrap">
           <div class="card-titulo" style="justify-content:center;">Score General <span id="dash-count" style="font-size:12px;color:var(--texto-suave);font-weight:400;margin-left:6px;"></span></div>
           <canvas id="gaugeGeneral5s"></canvas>
           <div id="pct-general5s" class="gauge-pct">–</div>
         </div>
-
         <div class="gauges-grid">
           <div class="card gauge-wrap"><div class="card-titulo" style="justify-content:center;font-size:14px;">1S</div><canvas id="gauge-1S"></canvas><div id="pct-1S" class="gauge-pct" style="font-size:18px;">–</div></div>
           <div class="card gauge-wrap"><div class="card-titulo" style="justify-content:center;font-size:14px;">2S</div><canvas id="gauge-2S"></canvas><div id="pct-2S" class="gauge-pct" style="font-size:18px;">–</div></div>
@@ -260,7 +231,6 @@ tbody tr:hover{background:var(--gris-fondo);}
           <div class="card gauge-wrap"><div class="card-titulo" style="justify-content:center;font-size:14px;">4S</div><canvas id="gauge-4S"></canvas><div id="pct-4S" class="gauge-pct" style="font-size:18px;">–</div></div>
           <div class="card gauge-wrap"><div class="card-titulo" style="justify-content:center;font-size:14px;">5S</div><canvas id="gauge-5S"></canvas><div id="pct-5S" class="gauge-pct" style="font-size:18px;">–</div></div>
         </div>
-
         <div class="card"><div class="card-titulo">📊 Score General Promedio por Área</div><canvas id="graficaArea5s" height="100"></canvas></div>
         <div class="card"><div class="card-titulo">📈 Tendencia Semanal</div><canvas id="graficaTendencia5s" height="100"></canvas></div>
         <div class="card" style="display:flex;gap:10px;flex-wrap:wrap;">
@@ -269,7 +239,6 @@ tbody tr:hover{background:var(--gris-fondo);}
         </div>
       </div>
 
-      <!-- HISTORIAL -->
       <div class="admin-seccion" id="sec-historial">
         <div class="table-wrap">
           <table>
@@ -279,7 +248,6 @@ tbody tr:hover{background:var(--gris-fondo);}
         </div>
       </div>
 
-      <!-- PLAN DE ACCIONES -->
       <div class="admin-seccion" id="sec-acciones">
         <div class="filtros-bar">
           <div class="campo" style="margin-bottom:0;"><label>Área</label>
@@ -302,7 +270,6 @@ tbody tr:hover{background:var(--gris-fondo);}
         </div>
       </div>
 
-      <!-- EMPLEADOS -->
       <div class="admin-seccion" id="sec-empleados">
         <div class="grid2">
           <div>
@@ -318,13 +285,22 @@ tbody tr:hover{background:var(--gris-fondo);}
         </div>
       </div>
 
+      <div class="admin-seccion" id="sec-preguntas">
+        <p style="font-size:13px;color:var(--texto-suave);margin-bottom:14px;line-height:1.6;">
+          Edita el texto de cada pregunta, agrega nuevas o elimínalas, y elige qué área (1S–5S) le corresponde. En cada pregunta selecciona qué respuesta (<b>Sí</b> o <b>No</b>) es la que <b>cumple</b> y suma puntos al porcentaje. Los cambios aplican a las próximas auditorías.
+        </p>
+        <div id="preguntasAdminCats"></div>
+        <div class="card" style="display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;">
+          <button class="btn btn-verde" onclick="guardarPreguntas()">💾 Guardar Cambios</button>
+          <button class="btn btn-outline" onclick="renderPreguntasAdmin()">↺ Descartar cambios</button>
+          <button class="btn btn-rojo" onclick="restaurarPreguntasDefault()">⚠ Restaurar preguntas originales</button>
+        </div>
+      </div>
     </div>
   </div>
 
-  <!-- ===== FORMULARIO DE AUDITORIA ===== -->
   <div class="container">
     <div class="registrador-banner"><span style="font-size:20px;">👤</span><div><div class="rb-label">Auditoría registrada por</div><div class="rb-nombre" id="banner-nombre"></div></div></div>
-
     <div class="resumen-card" id="resumenCard">
       <div class="resumen-top">
         <span id="resumen-contador">0/10 preguntas respondidas</span>
@@ -332,7 +308,6 @@ tbody tr:hover{background:var(--gris-fondo);}
       </div>
       <div class="resumen-barras" id="resumenBarras"></div>
     </div>
-
     <div class="card">
       <div class="card-titulo">📍 Datos de la Auditoría</div>
       <div class="grid2">
@@ -349,9 +324,7 @@ tbody tr:hover{background:var(--gris-fondo);}
       </div>
       <div class="campo"><label>Proceso Auditado</label><input type="text" id="aud-proceso" placeholder="Ej: Ensamble de estructura primaria"></div>
     </div>
-
     <div id="preguntasContainer"></div>
-
     <div class="card" style="text-align:center;">
       <button class="btn btn-verde btn-full" id="btnGuardarAuditoria" onclick="guardarAuditoria()">💾 Guardar Auditoría</button>
     </div>
@@ -369,18 +342,10 @@ firebase.initializeApp({
 });
 const db = firebase.firestore();
 
-/* ============================================================
-   CONFIG
-============================================================ */
-// Cloudinary: crea una cuenta gratuita en cloudinary.com, copia tu "Cloud name"
-// y crea un Upload Preset SIN FIRMAR (unsigned) con el nombre que pongas aquí.
 const CLOUDINARY_CLOUD_NAME   = "dc9wxwria";
 const CLOUDINARY_UPLOAD_PRESET = "auditoria_5s";
-
 const ADMIN_PASSWORD = "5S2026";
-
 const AREAS_5S = ["A330","A350","ALMACENES","BOEING","COMAC","ENVIOS","FTF A220","LEGACY","METAL WORKS","MONUMENTOS","PROCESOS PRIMARIOS","SHIPLOOSE"];
-
 const CAT_INFO = {
   "1S": { nombre:"1S · Sortear",         color:"#dc2626" },
   "2S": { nombre:"2S · Organizar",       color:"#ea580c" },
@@ -389,31 +354,26 @@ const CAT_INFO = {
   "5S": { nombre:"5S · Sostenimiento",   color:"#16a34a" }
 };
 
-// invertido:true => "No" es la respuesta correcta (la pregunta describe un hallazgo/problema)
-const PREGUNTAS_5S = [
-  { id:1,  cat:"1S", invertido:true,  texto:"¿Se tienen materiales, trapos o químicos innecesarios que deban retirarse? ¿Hay equipos, muebles, repuestos, empaques en desuso en el área, estación de trabajo y mesas no necesarios que deban retirarse? ¿Existen elementos como tuberías en desuso, materiales colgantes sobre el techo que deben retirarse?" },
-  { id:2,  cat:"1S", invertido:true,  texto:"¿Se tienen documentos NO necesarios en estaciones de trabajo, computadoras y escritorios? ¿Se tienen racks en mal estado, cables expuestos o condiciones que pongan en riesgo tu seguridad al realizar el trabajo?" },
-  { id:3,  cat:"2S", invertido:false, texto:"¿Todo tiene un lugar asignado y etiquetado incluido marcado de suelo de acuerdo a Código estándar de colores (herramientas, materiales, productos, químicos)? ¿El área cuenta con contenedores FOD individuales?" },
-  { id:4,  cat:"2S", invertido:false, texto:"¿Los documentos utilizados para la operación están identificados y ubicados correctamente? ¿La información en los tableros de comunicación del área está actualizada?" },
-  { id:5,  cat:"3S", invertido:false, texto:"¿El área está limpia y ordenada por todo el personal? ¿Las etiquetas, rótulos e identificaciones están protegidos enmicados en buen estado y se pueden leer? ¿Las delimitaciones de suelo (tapes) están en buen estado que no estén dañados?" },
-  { id:6,  cat:"3S", invertido:false, texto:"¿Las piezas están en un entorno libre de FOD? ¿Los contenedores FOD / Residuos se vacían al final del turno?" },
-  { id:7,  cat:"4S", invertido:false, texto:"¿Se muestran los estándares visuales 5S y están activos en el área? ¿El área está identificada correctamente con su nombre y estándar del sitio? ¿Los documentos, métricas y gráficos usan el estándar correcto de la empresa?" },
-  { id:8,  cat:"4S", invertido:false, texto:"¿Los materiales, piezas y químicos están identificados y almacenados según estándar? ¿No hay productos químicos vencidos, verifique al menos 5 químicos que se encuentren en la zona?" },
-  { id:9,  cat:"5S", invertido:false, texto:"¿El patrocinador, líderes de área y equipo participan activamente en 5S? ¿Se realizan evaluaciones semanales / mensuales y se siguen las reglas de 5S?" },
-  { id:10, cat:"5S", invertido:false, texto:"¿El plan de mejora 5S actual está publicado y no tiene fechas vencidas?" }
+const PREGUNTAS_5S_DEFAULT = [
+  { id:"1",  cat:"1S", invertido:true,  texto:"¿Se tienen materiales, trapos o químicos innecesarios que deban retirarse? ¿Hay equipos, muebles, repuestos, empaques en desuso en el área, estación de trabajo y mesas no necesarios que deban retirarse? ¿Existen elementos como tuberías en desuso, materiales colgantes sobre el techo que deben retirarse?" },
+  { id:"2",  cat:"1S", invertido:true,  texto:"¿Se tienen documentos NO necesarios en estaciones de trabajo, computadoras y escritorios? ¿Se tienen racks en mal estado, cables expuestos o condiciones que pongan en riesgo tu seguridad al realizar el trabajo?" },
+  { id:"3",  cat:"2S", invertido:false, texto:"¿Todo tiene un lugar asignado y etiquetado incluido marcado de suelo de acuerdo a Código estándar de colores (herramientas, materiales, productos, químicos)? ¿El área cuenta con contenedores FOD individuales?" },
+  { id:"4",  cat:"2S", invertido:false, texto:"¿Los documentos utilizados para la operación están identificados y ubicados correctamente? ¿La información en los tableros de comunicación del área está actualizada?" },
+  { id:"5",  cat:"3S", invertido:false, texto:"¿El área está limpia y ordenada por todo el personal? ¿Las etiquetas, rótulos e identificaciones están protegidos enmicados en buen estado y se pueden leer? ¿Las delimitaciones de suelo (tapes) están en buen estado que no estén dañados?" },
+  { id:"6",  cat:"3S", invertido:false, texto:"¿Las piezas están en un entorno libre de FOD? ¿Los contenedores FOD / Residuos se vacían al final del turno?" },
+  { id:"7",  cat:"4S", invertido:false, texto:"¿Se muestran los estándares visuales 5S y están activos en el área? ¿El área está identificada correctamente con su nombre y estándar del sitio? ¿Los documentos, métricas y gráficos usan el estándar correcto de la empresa?" },
+  { id:"8",  cat:"4S", invertido:false, texto:"¿Los materiales, piezas y químicos están identificados y almacenados según estándar? ¿No hay productos químicos vencidos, verifique al menos 5 químicos que se encuentren en la zona?" },
+  { id:"9",  cat:"5S", invertido:false, texto:"¿El patrocinador, líderes de área y equipo participan activamente en 5S? ¿Se realizan evaluaciones semanales / mensuales y se siguen las reglas de 5S?" },
+  { id:"10", cat:"5S", invertido:false, texto:"¿El plan de mejora 5S actual está publicado y no tiene fechas vencidas?" }
 ];
 
+let PREGUNTAS_5S = [];
 let usuarioActual = { numero:"", nombre:"" };
 let respuestasActuales = {};
 let accionCounter = 0;
-
 const STATE = { auditorias:[], acciones:[], adminCargado:false, adminDesbloqueado:false };
-
 let gaugesAdmin = {}, chartArea = null, chartTendencia = null;
 
-/* ============================================================
-   HELPERS
-============================================================ */
 function notif(msg, error=false){
   const el = document.getElementById("notif");
   el.textContent = msg; el.className = "show" + (error ? " err" : "");
@@ -432,9 +392,30 @@ function escapeHTML(str){
 }
 function gaugeColor(v){ return v>=75 ? "#16a34a" : v>=50 ? "#f59e0b" : "#dc2626"; }
 
-/* ============================================================
-   LOGIN
-============================================================ */
+async function cargarPreguntas(){
+  try {
+    const snap = await db.collection("preguntas5s").orderBy("orden").get();
+    if (snap.empty){
+      const batch = db.batch();
+      PREGUNTAS_5S_DEFAULT.forEach((p,i)=>{
+        const ref = db.collection("preguntas5s").doc(p.id);
+        batch.set(ref, { cat:p.cat, invertido:!!p.invertido, texto:p.texto, orden:i });
+      });
+      await batch.commit();
+      PREGUNTAS_5S = PREGUNTAS_5S_DEFAULT.map(p=>({...p}));
+    } else {
+      PREGUNTAS_5S = snap.docs.map(d=>{
+        const data = d.data();
+        return { id:d.id, cat:data.cat, invertido:!!data.invertido, texto:data.texto };
+      });
+    }
+  } catch(e){
+    console.error(e);
+    PREGUNTAS_5S = PREGUNTAS_5S_DEFAULT.map(p=>({...p}));
+    notif("No se pudieron cargar las preguntas desde la base de datos, se usan valores por defecto", true);
+  }
+}
+
 async function buscarEmpleadoLogin(){
   const numero = document.getElementById("login-numero").value;
   const hint = document.getElementById("login-hint");
@@ -460,6 +441,9 @@ async function confirmarLogin(){
     document.getElementById("appPrincipal").style.display = "block";
     document.getElementById("banner-nombre").innerText = usuarioActual.nombre + " · #" + usuarioActual.numero;
     document.getElementById("aud-auditor").value = usuarioActual.nombre;
+    setLoading(true, "Cargando preguntas de la auditoría...");
+    await cargarPreguntas();
+    setLoading(false);
     inicializarFormulario();
   } catch(e){ estado.style.color="var(--rojo)"; estado.innerText="Error de conexión con la base de datos"; }
 }
@@ -473,9 +457,6 @@ function logout(){
   document.getElementById("modalLogin").classList.add("abierto");
 }
 
-/* ============================================================
-   FORMULARIO DE AUDITORIA
-============================================================ */
 function inicializarFormulario(){
   initResumenBarras();
   renderPreguntas();
@@ -496,7 +477,7 @@ function renderPreguntas(){
   const cont = document.getElementById("preguntasContainer");
   cont.innerHTML = "";
   let catActual = "";
-  PREGUNTAS_5S.forEach(p => {
+  PREGUNTAS_5S.forEach((p, idx) => {
     if (p.cat !== catActual){
       catActual = p.cat;
       const info = CAT_INFO[p.cat];
@@ -504,15 +485,15 @@ function renderPreguntas(){
     }
     cont.innerHTML += `
     <div class="card pregunta-card" data-id="${p.id}">
-      <div class="pregunta-num">Pregunta ${p.id} de ${PREGUNTAS_5S.length}</div>
+      <div class="pregunta-num">Pregunta ${idx+1} de ${PREGUNTAS_5S.length}</div>
       <div class="pregunta-texto">${p.texto}</div>
       <div class="respuesta-toggle">
-        <button type="button" class="resp-btn resp-si" onclick="setRespuesta(${p.id},'si',this)">✅ Sí</button>
-        <button type="button" class="resp-btn resp-no" onclick="setRespuesta(${p.id},'no',this)">❌ No</button>
+        <button type="button" class="resp-btn resp-si" onclick="setRespuesta('${p.id}','si',this)">✅ Sí</button>
+        <button type="button" class="resp-btn resp-no" onclick="setRespuesta('${p.id}','no',this)">❌ No</button>
       </div>
       <div class="campo">
         <label>📷 Foto de evidencia</label>
-        <input type="file" accept="image/*" capture="environment" id="foto-${p.id}" onchange="previewFoto(${p.id})">
+        <input type="file" accept="image/*" capture="environment" id="foto-${p.id}" onchange="previewFoto('${p.id}')">
         <img id="preview-${p.id}" class="foto-preview">
       </div>
       <div class="campo" style="margin-bottom:0;">
@@ -522,7 +503,7 @@ function renderPreguntas(){
       <div class="acciones-wrap">
         <label>🛠 Acciones / Hallazgos</label>
         <div class="acciones-lista" id="acciones-lista-${p.id}"></div>
-        <button type="button" class="btn btn-outline btn-sm" onclick="agregarAccion(${p.id})">+ Agregar acción</button>
+        <button type="button" class="btn btn-outline btn-sm" onclick="agregarAccion('${p.id}')">+ Agregar acción</button>
       </div>
     </div>`;
   });
@@ -573,9 +554,9 @@ function calcularScores(){
   });
   const porcentajePorCat = {};
   Object.keys(porCat).forEach(c => {
-    porcentajePorCat[c] = Math.round((porCat[c].cumple / porCat[c].total) * 100);
+    porcentajePorCat[c] = porCat[c].total ? Math.round((porCat[c].cumple / porCat[c].total) * 100) : null;
   });
-  const general = Math.round((totalCumple / PREGUNTAS_5S.length) * 100);
+  const general = PREGUNTAS_5S.length ? Math.round((totalCumple / PREGUNTAS_5S.length) * 100) : 0;
   return { porcentajePorCat, general, totalResp };
 }
 
@@ -585,8 +566,9 @@ function actualizarResumen(){
   document.getElementById("resumen-general").innerText = general + "%";
   document.getElementById("resumen-general").style.color = gaugeColor(general);
   Object.keys(porcentajePorCat).forEach(c => {
-    document.getElementById("barra-"+c).style.width = porcentajePorCat[c] + "%";
-    document.getElementById("barratxt-"+c).innerText = porcentajePorCat[c] + "%";
+    const v = porcentajePorCat[c];
+    document.getElementById("barra-"+c).style.width = (v ?? 0) + "%";
+    document.getElementById("barratxt-"+c).innerText = v == null ? "N/A" : v + "%";
   });
 }
 
@@ -605,29 +587,25 @@ async function guardarAuditoria(){
   const auditor = document.getElementById("aud-auditor").value.trim();
   const proceso = document.getElementById("aud-proceso").value.trim();
   if (!area || !auditor || !proceso) return notif("Completa Área, Auditor y Proceso Auditado", true);
-  for (const p of PREGUNTAS_5S){
-    if (!respuestasActuales[p.id]) return notif("Responde la pregunta " + p.id + " (Sí / No)", true);
+  for (let i=0; i<PREGUNTAS_5S.length; i++){
+    if (!respuestasActuales[PREGUNTAS_5S[i].id]) return notif("Responde la pregunta " + (i+1) + " (Sí / No)", true);
   }
-
   const btn = document.getElementById("btnGuardarAuditoria");
   btn.disabled = true; btn.innerText = "Guardando...";
   setLoading(true, "Guardando auditoría...");
-
   try {
     const ahora = new Date(), fechaStr = ahora.toISOString().split("T")[0], semana = getSemanaActual(ahora);
     const respuestas = [];
-
-    for (const p of PREGUNTAS_5S){
+    for (let i=0; i<PREGUNTAS_5S.length; i++){
+      const p = PREGUNTAS_5S[i];
       const r = respuestasActuales[p.id];
       const cumple = (r==="no" && p.invertido) || (r==="si" && !p.invertido);
-
       let fotoUrl = "";
       const file = document.getElementById("foto-"+p.id).files[0];
       if (file){
-        setLoading(true, `Subiendo foto pregunta ${p.id}/${PREGUNTAS_5S.length}...`);
+        setLoading(true, `Subiendo foto pregunta ${i+1}/${PREGUNTAS_5S.length}...`);
         fotoUrl = await subirCloudinary(file);
       }
-
       const acciones = [];
       document.querySelectorAll(`#acciones-lista-${p.id} .accion-row`).forEach(row => {
         const desc = row.querySelector(".acc-desc").value.trim();
@@ -635,24 +613,20 @@ async function guardarAuditoria(){
         const fecha = row.querySelector(".acc-fecha").value;
         if (desc) acciones.push({ descripcion:desc, responsable:resp, fechaLimite:fecha });
       });
-
       respuestas.push({
         id:p.id, categoria:p.cat, pregunta:p.texto, respuesta:r, cumple,
         comentario: document.getElementById("coment-"+p.id).value.trim(),
         foto: fotoUrl, acciones
       });
     }
-
     setLoading(true, "Guardando registro...");
     const { porcentajePorCat, general } = calcularScores();
     const auditoria = {
       numeroEmpleado: usuarioActual.numero, nombreEmpleado: usuarioActual.nombre,
-      area, auditor, proceso,
-      fecha: ahora, fechaStr, semana,
+      area, auditor, proceso, fecha: ahora, fechaStr, semana,
       respuestas, scorePorCategoria: porcentajePorCat, scoreGeneral: general
     };
     const ref = await db.collection("auditorias5s").add(auditoria);
-
     const batch = db.batch();
     respuestas.forEach(r => {
       r.acciones.forEach(a => {
@@ -666,7 +640,6 @@ async function guardarAuditoria(){
       });
     });
     await batch.commit();
-
     notif("✅ Auditoría guardada correctamente — Score general: " + general + "%");
     resetFormulario();
   } catch(e){
@@ -687,9 +660,6 @@ function resetFormulario(){
   window.scrollTo({top:0, behavior:"smooth"});
 }
 
-/* ============================================================
-   MULTI-SELECT (ÁREA, panel admin)
-============================================================ */
 document.addEventListener("click", e => {
   document.querySelectorAll(".multi-select-wrap").forEach(wrap => {
     if (!wrap.contains(e.target)) closeMS(wrap.id);
@@ -744,9 +714,6 @@ function limpiarFiltrosDash(){
   actualizarDashboard(); renderHistorial();
 }
 
-/* ============================================================
-   ADMIN PANEL
-============================================================ */
 async function toggleAdminPanel(){
   if (!STATE.adminDesbloqueado){
     const pass = prompt("Contraseña de administrador:");
@@ -759,7 +726,7 @@ async function toggleAdminPanel(){
 }
 
 function cambiarSubtabAdmin(seccion){
-  ["dashboard","historial","acciones","empleados"].forEach(s=>{
+  ["dashboard","historial","acciones","empleados","preguntas"].forEach(s=>{
     document.getElementById("sec-"+s).classList.toggle("activo", s===seccion);
     document.getElementById("sub-"+s).classList.toggle("activo", s===seccion);
   });
@@ -781,6 +748,7 @@ async function cargarDatosAdmin(){
     actualizarDashboard();
     renderHistorial();
     renderPlanAcciones();
+    renderPreguntasAdmin();
   } catch(e){
     console.error(e);
     notif("Error cargando datos de administración: " + e.message, true);
@@ -795,7 +763,6 @@ function poblarFiltroAreaAcciones(){
   AREAS_5S.forEach(a=>{ const o=document.createElement("option"); o.value=o.textContent=a; sel.appendChild(o); });
 }
 
-/* ---------- DASHBOARD ---------- */
 function getAuditoriasFiltradas(){
   const areas = getSelectedMS("ms-area5s");
   const fi = document.getElementById("dashFechaInicio").value;
@@ -877,7 +844,6 @@ function actualizarGraficaTendencia(lista){
   });
 }
 
-/* ---------- HISTORIAL ---------- */
 function fechaDe(obj){ return obj?.toDate ? obj.toDate() : new Date(obj); }
 
 function renderHistorial(){
@@ -905,7 +871,6 @@ async function verDetalleAuditoria(id){
   const cont = document.getElementById("detalle-body");
   cont.innerHTML = "Cargando...";
   document.getElementById("modalDetalle").classList.add("abierto");
-
   let accionesPorPregunta = {};
   try {
     const accSnap = await db.collection("acciones5s").where("auditoriaId","==",id).get();
@@ -914,7 +879,6 @@ async function verDetalleAuditoria(id){
       (accionesPorPregunta[d.preguntaId] = accionesPorPregunta[d.preguntaId] || []).push({id:doc.id, ...d});
     });
   } catch(e){ console.error(e); }
-
   cont.innerHTML = "";
   a.respuestas.forEach(r=>{
     const info = CAT_INFO[r.categoria];
@@ -949,7 +913,6 @@ async function toggleEstadoAccion(id, el){
   } catch(e){ notif("Error al actualizar acción: "+e.message, true); }
 }
 
-/* ---------- PLAN DE ACCIONES ---------- */
 function renderPlanAcciones(){
   const filArea = document.getElementById("acc-filtroArea").value;
   const filEstado = document.getElementById("acc-filtroEstado").value;
@@ -959,7 +922,6 @@ function renderPlanAcciones(){
   if (filEstado) lista = lista.filter(a=>a.estado===filEstado);
   if (filResp) lista = lista.filter(a=>(a.responsable||"").toLowerCase().includes(filResp));
   lista.sort((a,b)=>(a.fechaLimite||"9999").localeCompare(b.fechaLimite||"9999"));
-
   document.getElementById("acc-count").textContent = lista.length;
   const tbody = document.getElementById("tablaAcciones5s");
   tbody.innerHTML = "";
@@ -978,7 +940,6 @@ function renderPlanAcciones(){
   });
 }
 
-/* ---------- EXPORTAR ---------- */
 function exportarAuditoriasExcel(){
   if (!STATE.auditorias.length) return notif("No hay auditorías para exportar", true);
   const rows = STATE.auditorias.map(a=>{
@@ -1037,7 +998,6 @@ function exportarAccionesExcel(){
   notif("Excel exportado ✅");
 }
 
-/* ---------- EMPLEADOS ---------- */
 async function subirEmpleadosExcel(){
   const estado = document.getElementById("emp-estado");
   const file = document.getElementById("emp-excel").files[0];
@@ -1065,9 +1025,110 @@ function descargarPlantillaEmpleados(){
   XLSX.writeFile(wb, "plantilla_empleados.xlsx");
 }
 
-/* ============================================================
-   INIT
-============================================================ */
+let preguntasEdit = [];
+
+function initPreguntasAdminCats(){
+  const cont = document.getElementById("preguntasAdminCats");
+  cont.innerHTML = Object.keys(CAT_INFO).map(cat=>{
+    const info = CAT_INFO[cat];
+    return `<div class="card">
+      <div class="card-titulo"><span class="cat-badge" style="background:${info.color}22;color:${info.color}">${info.nombre}</span></div>
+      <div id="preg-admin-list-${cat}"></div>
+      <button type="button" class="btn btn-outline btn-sm" onclick="agregarPreguntaAdmin('${cat}')">+ Agregar pregunta a ${cat}</button>
+    </div>`;
+  }).join("");
+}
+
+function renderPreguntasAdmin(){
+  preguntasEdit = PREGUNTAS_5S.map(p=>({...p}));
+  dibujarPreguntasAdmin();
+}
+
+function dibujarPreguntasAdmin(){
+  Object.keys(CAT_INFO).forEach(cat=>{
+    const cont = document.getElementById("preg-admin-list-"+cat);
+    if (!cont) return;
+    const items = preguntasEdit.filter(p=>p.cat===cat);
+    if (!items.length){
+      cont.innerHTML = `<p class="pregunta-admin-empty">Sin preguntas en esta categoría.</p>`;
+      return;
+    }
+    cont.innerHTML = items.map(p=>{
+      const idx = preguntasEdit.indexOf(p);
+      return `
+      <div class="pregunta-admin-row">
+        <textarea oninput="actualizarCampoPregunta(${idx},'texto',this.value)" placeholder="Texto de la pregunta...">${escapeHTML(p.texto)}</textarea>
+        <div class="pregunta-admin-controls">
+          <label>Cumple si responden:</label>
+          <select onchange="actualizarCampoPregunta(${idx},'invertido', this.value==='no')">
+            <option value="si" ${!p.invertido?'selected':''}>✅ Sí</option>
+            <option value="no" ${p.invertido?'selected':''}>❌ No</option>
+          </select>
+          <label>Categoría:</label>
+          <select onchange="actualizarCampoPregunta(${idx},'cat', this.value)">
+            ${Object.keys(CAT_INFO).map(c=>`<option value="${c}" ${c===p.cat?'selected':''}>${c}</option>`).join("")}
+          </select>
+          <button type="button" class="acc-remove" onclick="eliminarPreguntaAdmin(${idx})" title="Eliminar pregunta">✕</button>
+        </div>
+      </div>`;
+    }).join("");
+  });
+}
+
+function actualizarCampoPregunta(idx, campo, valor){
+  preguntasEdit[idx][campo] = valor;
+  if (campo === 'cat') dibujarPreguntasAdmin();
+}
+
+function agregarPreguntaAdmin(cat){
+  preguntasEdit.push({ id:null, cat, invertido:false, texto:"" });
+  dibujarPreguntasAdmin();
+}
+
+function eliminarPreguntaAdmin(idx){
+  if (!confirm("¿Eliminar esta pregunta? Esto no se aplicará hasta que guardes los cambios.")) return;
+  preguntasEdit.splice(idx,1);
+  dibujarPreguntasAdmin();
+}
+
+async function guardarPreguntas(){
+  if (!preguntasEdit.length) return notif("Debe haber al menos una pregunta", true);
+  const vacia = preguntasEdit.some(p=>!p.texto.trim());
+  if (vacia) return notif("Hay preguntas con el texto vacío. Complétalas o elimínalas.", true);
+  setLoading(true, "Guardando preguntas...");
+  try {
+    const ordenado = [];
+    Object.keys(CAT_INFO).forEach(cat=>{
+      preguntasEdit.filter(p=>p.cat===cat).forEach(p=>ordenado.push(p));
+    });
+    const snapOld = await db.collection("preguntas5s").get();
+    const batch = db.batch();
+    snapOld.forEach(d=>batch.delete(d.ref));
+    ordenado.forEach((p,i)=>{
+      const ref = db.collection("preguntas5s").doc(String(i+1));
+      batch.set(ref, { cat:p.cat, invertido:!!p.invertido, texto:p.texto.trim(), orden:i });
+    });
+    await batch.commit();
+    await cargarPreguntas();
+    renderPreguntas();
+    actualizarResumen();
+    renderPreguntasAdmin();
+    notif("✅ Preguntas guardadas correctamente");
+  } catch(e){
+    console.error(e);
+    notif("Error al guardar preguntas: " + e.message, true);
+  } finally {
+    setLoading(false);
+  }
+}
+
+function restaurarPreguntasDefault(){
+  if (!confirm("Esto reemplazará la lista en edición con las preguntas originales de la app (sin guardar todavía). ¿Continuar?")) return;
+  preguntasEdit = PREGUNTAS_5S_DEFAULT.map(p=>({...p}));
+  dibujarPreguntasAdmin();
+}
+
+initPreguntasAdminCats();
 setLoading(false);
 </script>
 </body>
