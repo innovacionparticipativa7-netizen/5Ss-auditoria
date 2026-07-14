@@ -816,11 +816,16 @@ function actualizarDashboard(){
 function actualizarGraficaArea(lista){
   const porArea = {}; AREAS_5S.forEach(a=>porArea[a]=[]);
   lista.forEach(a=>{ if (porArea[a.area]) porArea[a.area].push(a.scoreGeneral||0); });
-  const labels = AREAS_5S;
-  const data = labels.map(a=>{
+
+  // Calculamos el promedio por área y las ordenamos de mayor a menor
+  const combinado = AREAS_5S.map(a=>{
     const v = porArea[a];
-    return v.length ? Math.round(v.reduce((s,x)=>s+x,0)/v.length) : 0;
-  });
+    return { area:a, valor: v.length ? Math.round(v.reduce((s,x)=>s+x,0)/v.length) : 0 };
+  }).sort((a,b)=>b.valor - a.valor);
+
+  const labels = combinado.map(c=>c.area);
+  const data = combinado.map(c=>c.valor);
+
   const ctx = document.getElementById("graficaArea5s").getContext("2d");
   if (chartArea) chartArea.destroy();
   chartArea = new Chart(ctx, {
