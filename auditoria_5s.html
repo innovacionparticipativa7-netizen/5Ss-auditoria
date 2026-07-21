@@ -9,6 +9,7 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;900&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet">
 
 <style>
@@ -88,12 +89,17 @@ textarea{min-height:60px;resize:vertical;}
 .resp-btn.resp-si.activo{background:#dcfce7;border-color:var(--verde);color:#15803d;}
 .resp-btn.resp-no.activo{background:#fee2e2;border-color:var(--rojo);color:#b91c1c;}
 .foto-preview{display:none;max-width:100%;border-radius:10px;margin-top:8px;max-height:240px;object-fit:cover;}
+.foto-actions{display:none;margin-top:8px;}
 .acciones-wrap{margin-top:14px;border-top:1.5px dashed var(--gris-borde);padding-top:12px;}
 .acciones-wrap>label{display:block;font-size:11px;font-weight:700;color:var(--texto-suave);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;}
 .accion-row{display:grid;grid-template-columns:1.4fr 1fr 130px 36px;gap:6px;margin-bottom:8px;align-items:center;}
 .accion-row input{padding:9px 10px;font-size:13px;}
 .acc-remove{width:36px;height:36px;border-radius:8px;border:1.5px solid var(--gris-borde);background:#fee2e2;color:var(--rojo);font-weight:800;cursor:pointer;font-size:15px;}
 @media(max-width:600px){.accion-row{grid-template-columns:1fr;}}
+.tipo-tabs{display:flex;gap:8px;flex-wrap:wrap;}
+.tipo-tab-btn{flex:1;min-width:120px;padding:12px 10px;border-radius:10px;border:2px solid var(--gris-borde);background:var(--gris-fondo);cursor:pointer;font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--texto-suave);transition:.15s;}
+.tipo-tab-btn:hover{border-color:#94a3b8;}
+.tipo-tab-btn.activo{background:#eff6ff;border-color:var(--azul-medio);color:var(--azul);}
 .admin-panel-outer{max-width:1300px;margin:0 auto;padding:0 16px;}
 .admin-panel-body{display:none;background:#fff;border:1.5px solid var(--gris-borde);border-radius:0 0 14px 14px;border-top:none;padding:18px;box-shadow:0 6px 16px rgba(0,0,0,.08);margin-bottom:16px;}
 .admin-panel-body.abierto{display:block;}
@@ -215,6 +221,11 @@ tbody tr:hover{background:var(--gris-fondo);}
               </div>
             </div>
           </div>
+          <div class="campo" style="margin-bottom:0;"><label>Tipo de evaluación</label>
+            <select id="dashFiltroTipo" onchange="actualizarDashboard();renderHistorial()">
+              <option value="">Todos</option>
+            </select>
+          </div>
           <div class="campo" style="margin-bottom:0;"><label>Desde</label><input type="date" id="dashFechaInicio" onchange="actualizarDashboard();renderHistorial()"></div>
           <div class="campo" style="margin-bottom:0;"><label>Hasta</label><input type="date" id="dashFechaFin" onchange="actualizarDashboard();renderHistorial()"></div>
           <button class="btn btn-outline btn-sm" onclick="limpiarFiltrosDash()">✕ Limpiar filtros</button>
@@ -242,7 +253,7 @@ tbody tr:hover{background:var(--gris-fondo);}
       <div class="admin-seccion" id="sec-historial">
         <div class="table-wrap">
           <table>
-            <thead><tr><th>Fecha</th><th>Área</th><th>Auditor</th><th>Proceso</th><th>1S</th><th>2S</th><th>3S</th><th>4S</th><th>5S</th><th>General</th><th></th></tr></thead>
+            <thead><tr><th>Fecha</th><th>Tipo</th><th>Área</th><th>Auditor</th><th>Proceso</th><th>1S</th><th>2S</th><th>3S</th><th>4S</th><th>5S</th><th>General</th><th></th></tr></thead>
             <tbody id="tablaHistorial5s"></tbody>
           </table>
         </div>
@@ -287,8 +298,9 @@ tbody tr:hover{background:var(--gris-fondo);}
 
       <div class="admin-seccion" id="sec-preguntas">
         <p style="font-size:13px;color:var(--texto-suave);margin-bottom:14px;line-height:1.6;">
-          Edita el texto de cada pregunta, agrega nuevas o elimínalas, y elige qué área (1S–5S) le corresponde. En cada pregunta selecciona qué respuesta (<b>Sí</b> o <b>No</b>) es la que <b>cumple</b> y suma puntos al porcentaje. Los cambios aplican a las próximas auditorías.
+          Edita el texto de cada pregunta, agrega nuevas o elimínalas, y elige qué área (1S–5S) le corresponde. En cada pregunta selecciona qué respuesta (<b>Sí</b> o <b>No</b>) es la que <b>cumple</b> y suma puntos al porcentaje. Cada <b>tipo de evaluación</b> (Producción, Oficinas, Exteriores) tiene su propio set de preguntas — usa las pestañas para cambiar entre ellas. Los cambios aplican a las próximas auditorías.
         </p>
+        <div class="admin-subtabs" id="preguntasTipoTabs"></div>
         <div id="preguntasAdminCats"></div>
         <div class="card" style="display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;">
           <button class="btn btn-verde" onclick="guardarPreguntas()">💾 Guardar Cambios</button>
@@ -301,6 +313,11 @@ tbody tr:hover{background:var(--gris-fondo);}
 
   <div class="container">
     <div class="registrador-banner"><span style="font-size:20px;">👤</span><div><div class="rb-label">Auditoría registrada por</div><div class="rb-nombre" id="banner-nombre"></div></div></div>
+
+    <div class="card" style="padding:12px;">
+      <div class="tipo-tabs" id="tipoTabs"></div>
+    </div>
+
     <div class="resumen-card" id="resumenCard">
       <div class="resumen-top">
         <span id="resumen-contador">0/10 preguntas respondidas</span>
@@ -354,20 +371,55 @@ const CAT_INFO = {
   "5S": { nombre:"5S · Sostenimiento",   color:"#16a34a" }
 };
 
-const PREGUNTAS_5S_DEFAULT = [
-  { id:"1",  cat:"1S", invertido:true,  texto:"¿Se tienen materiales, trapos o químicos innecesarios que deban retirarse? ¿Hay equipos, muebles, repuestos, empaques en desuso en el área, estación de trabajo y mesas no necesarios que deban retirarse? ¿Existen elementos como tuberías en desuso, materiales colgantes sobre el techo que deben retirarse?" },
-  { id:"2",  cat:"1S", invertido:true,  texto:"¿Se tienen documentos NO necesarios en estaciones de trabajo, computadoras y escritorios? ¿Se tienen racks en mal estado, cables expuestos o condiciones que pongan en riesgo tu seguridad al realizar el trabajo?" },
-  { id:"3",  cat:"2S", invertido:false, texto:"¿Todo tiene un lugar asignado y etiquetado incluido marcado de suelo de acuerdo a Código estándar de colores (herramientas, materiales, productos, químicos)? ¿El área cuenta con contenedores FOD individuales?" },
-  { id:"4",  cat:"2S", invertido:false, texto:"¿Los documentos utilizados para la operación están identificados y ubicados correctamente? ¿La información en los tableros de comunicación del área está actualizada?" },
-  { id:"5",  cat:"3S", invertido:false, texto:"¿El área está limpia y ordenada por todo el personal? ¿Las etiquetas, rótulos e identificaciones están protegidos enmicados en buen estado y se pueden leer? ¿Las delimitaciones de suelo (tapes) están en buen estado que no estén dañados?" },
-  { id:"6",  cat:"3S", invertido:false, texto:"¿Las piezas están en un entorno libre de FOD? ¿Los contenedores FOD / Residuos se vacían al final del turno?" },
-  { id:"7",  cat:"4S", invertido:false, texto:"¿Se muestran los estándares visuales 5S y están activos en el área? ¿El área está identificada correctamente con su nombre y estándar del sitio? ¿Los documentos, métricas y gráficos usan el estándar correcto de la empresa?" },
-  { id:"8",  cat:"4S", invertido:false, texto:"¿Los materiales, piezas y químicos están identificados y almacenados según estándar? ¿No hay productos químicos vencidos, verifique al menos 5 químicos que se encuentren en la zona?" },
-  { id:"9",  cat:"5S", invertido:false, texto:"¿El patrocinador, líderes de área y equipo participan activamente en 5S? ¿Se realizan evaluaciones semanales / mensuales y se siguen las reglas de 5S?" },
-  { id:"10", cat:"5S", invertido:false, texto:"¿El plan de mejora 5S actual está publicado y no tiene fechas vencidas?" }
-];
+const TIPOS_INFO = {
+  produccion: { nombre:"Producción", icon:"🏭" },
+  oficinas:   { nombre:"Oficinas",   icon:"🏢" },
+  exteriores: { nombre:"Exteriores", icon:"🌳" }
+};
+const TIPOS_ORDEN = ["produccion","oficinas","exteriores"];
 
+const PREGUNTAS_5S_DEFAULT_POR_TIPO = {
+  produccion: [
+    { id:"p1",  cat:"1S", invertido:true,  texto:"¿Se tienen materiales, trapos o químicos innecesarios que deban retirarse? ¿Hay equipos, muebles, repuestos, empaques en desuso en el área, estación de trabajo y mesas no necesarios que deban retirarse? ¿Existen elementos como tuberías en desuso, materiales colgantes sobre el techo que deben retirarse?" },
+    { id:"p2",  cat:"1S", invertido:true,  texto:"¿Se tienen documentos NO necesarios en estaciones de trabajo, computadoras y escritorios? ¿Se tienen racks en mal estado, cables expuestos o condiciones que pongan en riesgo tu seguridad al realizar el trabajo?" },
+    { id:"p3",  cat:"2S", invertido:false, texto:"¿Todo tiene un lugar asignado y etiquetado incluido marcado de suelo de acuerdo a Código estándar de colores (herramientas, materiales, productos, químicos)? ¿El área cuenta con contenedores FOD individuales?" },
+    { id:"p4",  cat:"2S", invertido:false, texto:"¿Los documentos utilizados para la operación están identificados y ubicados correctamente? ¿La información en los tableros de comunicación del área está actualizada?" },
+    { id:"p5",  cat:"3S", invertido:false, texto:"¿El área está limpia y ordenada por todo el personal? ¿Las etiquetas, rótulos e identificaciones están protegidos enmicados en buen estado y se pueden leer? ¿Las delimitaciones de suelo (tapes) están en buen estado que no estén dañados?" },
+    { id:"p6",  cat:"3S", invertido:false, texto:"¿Las piezas están en un entorno libre de FOD? ¿Los contenedores FOD / Residuos se vacían al final del turno?" },
+    { id:"p7",  cat:"4S", invertido:false, texto:"¿Se muestran los estándares visuales 5S y están activos en el área? ¿El área está identificada correctamente con su nombre y estándar del sitio? ¿Los documentos, métricas y gráficos usan el estándar correcto de la empresa?" },
+    { id:"p8",  cat:"4S", invertido:false, texto:"¿Los materiales, piezas y químicos están identificados y almacenados según estándar? ¿No hay productos químicos vencidos, verifique al menos 5 químicos que se encuentren en la zona?" },
+    { id:"p9",  cat:"5S", invertido:false, texto:"¿El patrocinador, líderes de área y equipo participan activamente en 5S? ¿Se realizan evaluaciones semanales / mensuales y se siguen las reglas de 5S?" },
+    { id:"p10", cat:"5S", invertido:false, texto:"¿El plan de mejora 5S actual está publicado y no tiene fechas vencidas?" }
+  ],
+  oficinas: [
+    { id:"o1",  cat:"1S", invertido:true,  texto:"¿Hay documentos, papelería, equipos o cajas en desuso sobre escritorios, archiveros o áreas comunes que deban retirarse?" },
+    { id:"o2",  cat:"1S", invertido:true,  texto:"¿Existen cables sueltos, enchufes sobrecargados o condiciones que representen un riesgo de seguridad en el área de oficinas?" },
+    { id:"o3",  cat:"2S", invertido:false, texto:"¿Los archivos físicos y digitales están organizados, etiquetados y ubicados en un lugar definido y de fácil acceso?" },
+    { id:"o4",  cat:"2S", invertido:false, texto:"¿Los tableros de comunicación e información en las áreas de trabajo están actualizados y ordenados?" },
+    { id:"o5",  cat:"3S", invertido:false, texto:"¿El área de oficinas (escritorios, salas de juntas, cocineta) se encuentra limpia y ordenada?" },
+    { id:"o6",  cat:"3S", invertido:false, texto:"¿Se realiza limpieza periódica de equipos de cómputo, teclados, pantallas y mobiliario?" },
+    { id:"o7",  cat:"4S", invertido:false, texto:"¿Se muestran los estándares visuales 5S en el área de oficinas y están vigentes?" },
+    { id:"o8",  cat:"4S", invertido:false, texto:"¿Existen procedimientos documentados y estandarizados para el manejo de archivo y documentación?" },
+    { id:"o9",  cat:"5S", invertido:false, texto:"¿El personal de oficinas participa activamente en las actividades y evaluaciones 5S?" },
+    { id:"o10", cat:"5S", invertido:false, texto:"¿El plan de mejora 5S del área de oficinas está publicado y sin fechas vencidas?" }
+  ],
+  exteriores: [
+    { id:"e1",  cat:"1S", invertido:true,  texto:"¿Existen materiales, chatarra, equipos en desuso o basura acumulada en patios, andenes o áreas exteriores que deban retirarse?" },
+    { id:"e2",  cat:"1S", invertido:true,  texto:"¿Hay condiciones inseguras como obstrucciones en pasillos vehiculares/peatonales, fugas o iluminación deficiente en el exterior?" },
+    { id:"e3",  cat:"2S", invertido:false, texto:"¿Las áreas de estacionamiento, andenes y zonas de tránsito están señalizadas y delimitadas según el estándar de colores?" },
+    { id:"e4",  cat:"2S", invertido:false, texto:"¿Los contenedores de residuos, reciclaje y materiales exteriores están correctamente identificados y ubicados?" },
+    { id:"e5",  cat:"3S", invertido:false, texto:"¿Las áreas exteriores (jardines, andenes, patios de maniobra) están limpias y libres de basura o derrames?" },
+    { id:"e6",  cat:"3S", invertido:false, texto:"¿Se realiza limpieza periódica de drenajes, coladeras y áreas de descarga en el exterior?" },
+    { id:"e7",  cat:"4S", invertido:false, texto:"¿La señalización exterior (rutas de evacuación, límites de velocidad, zonas restringidas) está visible y en buen estado?" },
+    { id:"e8",  cat:"4S", invertido:false, texto:"¿Los materiales o químicos almacenados en el exterior cuentan con protección adecuada y etiquetado correcto?" },
+    { id:"e9",  cat:"5S", invertido:false, texto:"¿Se realizan recorridos y evaluaciones periódicas de 5S en las áreas exteriores?" },
+    { id:"e10", cat:"5S", invertido:false, texto:"¿El plan de mejora 5S de áreas exteriores está publicado y no tiene fechas vencidas?" }
+  ]
+};
+
+let PREGUNTAS_TODAS = [];
 let PREGUNTAS_5S = [];
+let tipoActual = "produccion";
 let usuarioActual = { numero:"", nombre:"" };
 let respuestasActuales = {};
 let accionCounter = 0;
@@ -392,26 +444,53 @@ function escapeHTML(str){
 }
 function gaugeColor(v){ return v>=75 ? "#16a34a" : v>=50 ? "#f59e0b" : "#dc2626"; }
 
+function renderTipoTabs(){
+  const cont = document.getElementById("tipoTabs");
+  cont.innerHTML = TIPOS_ORDEN.map(t=>`<button type="button" class="tipo-tab-btn ${t===tipoActual?'activo':''}" onclick="cambiarTipo('${t}')">${TIPOS_INFO[t].icon} ${TIPOS_INFO[t].nombre}</button>`).join("");
+}
+
+function cambiarTipo(tipo){
+  if (tipo === tipoActual) return;
+  tipoActual = tipo;
+  respuestasActuales = {};
+  renderTipoTabs();
+  PREGUNTAS_5S = PREGUNTAS_TODAS.filter(p=>p.tipo===tipoActual);
+  renderPreguntas();
+  actualizarResumen();
+  window.scrollTo({top:0, behavior:"smooth"});
+}
+
 async function cargarPreguntas(){
   try {
     const snap = await db.collection("preguntas5s").orderBy("orden").get();
     if (snap.empty){
       const batch = db.batch();
-      PREGUNTAS_5S_DEFAULT.forEach((p,i)=>{
-        const ref = db.collection("preguntas5s").doc(p.id);
-        batch.set(ref, { cat:p.cat, invertido:!!p.invertido, texto:p.texto, orden:i });
+      let orden = 0;
+      TIPOS_ORDEN.forEach(tipo=>{
+        PREGUNTAS_5S_DEFAULT_POR_TIPO[tipo].forEach(p=>{
+          const ref = db.collection("preguntas5s").doc(tipo + "_" + p.id);
+          batch.set(ref, { tipo, cat:p.cat, invertido:!!p.invertido, texto:p.texto, orden:orden++ });
+        });
       });
       await batch.commit();
-      PREGUNTAS_5S = PREGUNTAS_5S_DEFAULT.map(p=>({...p}));
+      PREGUNTAS_TODAS = [];
+      TIPOS_ORDEN.forEach(tipo=>{
+        PREGUNTAS_5S_DEFAULT_POR_TIPO[tipo].forEach(p=>PREGUNTAS_TODAS.push({...p, tipo}));
+      });
     } else {
-      PREGUNTAS_5S = snap.docs.map(d=>{
+      PREGUNTAS_TODAS = snap.docs.map(d=>{
         const data = d.data();
-        return { id:d.id, cat:data.cat, invertido:!!data.invertido, texto:data.texto };
+        return { id:d.id, tipo:data.tipo||"produccion", cat:data.cat, invertido:!!data.invertido, texto:data.texto };
       });
     }
+    PREGUNTAS_5S = PREGUNTAS_TODAS.filter(p=>p.tipo===tipoActual);
   } catch(e){
     console.error(e);
-    PREGUNTAS_5S = PREGUNTAS_5S_DEFAULT.map(p=>({...p}));
+    PREGUNTAS_TODAS = [];
+    TIPOS_ORDEN.forEach(tipo=>{
+      PREGUNTAS_5S_DEFAULT_POR_TIPO[tipo].forEach(p=>PREGUNTAS_TODAS.push({...p, tipo}));
+    });
+    PREGUNTAS_5S = PREGUNTAS_TODAS.filter(p=>p.tipo===tipoActual);
     notif("No se pudieron cargar las preguntas desde la base de datos, se usan valores por defecto", true);
   }
 }
@@ -458,6 +537,7 @@ function logout(){
 }
 
 function inicializarFormulario(){
+  renderTipoTabs();
   initResumenBarras();
   renderPreguntas();
   actualizarResumen();
@@ -495,6 +575,9 @@ function renderPreguntas(){
         <label>📷 Foto de evidencia</label>
         <input type="file" accept="image/*" capture="environment" id="foto-${p.id}" onchange="previewFoto('${p.id}')">
         <img id="preview-${p.id}" class="foto-preview">
+        <div class="foto-actions" id="fotoActions-${p.id}">
+          <button type="button" class="btn btn-rojo btn-sm" onclick="eliminarFoto('${p.id}')">🗑 Eliminar foto</button>
+        </div>
       </div>
       <div class="campo" style="margin-bottom:0;">
         <label>💬 Comentario</label>
@@ -520,10 +603,21 @@ function setRespuesta(id, val, btn){
 function previewFoto(id){
   const file = document.getElementById("foto-"+id).files[0];
   const img = document.getElementById("preview-"+id);
-  if (!file){ img.style.display = "none"; img.src=""; return; }
+  const acciones = document.getElementById("fotoActions-"+id);
+  if (!file){ img.style.display = "none"; img.src=""; acciones.style.display="none"; return; }
   const reader = new FileReader();
-  reader.onload = e => { img.src = e.target.result; img.style.display = "block"; };
+  reader.onload = e => { img.src = e.target.result; img.style.display = "block"; acciones.style.display="block"; };
   reader.readAsDataURL(file);
+}
+
+function eliminarFoto(id){
+  const input = document.getElementById("foto-"+id);
+  const img = document.getElementById("preview-"+id);
+  const acciones = document.getElementById("fotoActions-"+id);
+  input.value = "";
+  img.src = ""; img.style.display = "none";
+  acciones.style.display = "none";
+  notif("Foto eliminada");
 }
 
 function agregarAccion(preguntaId){
@@ -623,6 +717,7 @@ async function guardarAuditoria(){
     const { porcentajePorCat, general } = calcularScores();
     const auditoria = {
       numeroEmpleado: usuarioActual.numero, nombreEmpleado: usuarioActual.nombre,
+      tipo: tipoActual,
       area, auditor, proceso, fecha: ahora, fechaStr, semana,
       respuestas, scorePorCategoria: porcentajePorCat, scoreGeneral: general
     };
@@ -632,7 +727,7 @@ async function guardarAuditoria(){
       r.acciones.forEach(a => {
         const accRef = db.collection("acciones5s").doc();
         batch.set(accRef, {
-          auditoriaId: ref.id, area, categoria:r.categoria, preguntaId:r.id, preguntaTexto:r.pregunta,
+          auditoriaId: ref.id, tipo: tipoActual, area, categoria:r.categoria, preguntaId:r.id, preguntaTexto:r.pregunta,
           descripcion:a.descripcion, responsable:a.responsable, fechaLimite:a.fechaLimite,
           estado:"pendiente", fecha:ahora, fechaStr, semana,
           numeroEmpleadoAuditor: usuarioActual.numero, nombreEmpleadoAuditor: usuarioActual.nombre, auditor
@@ -706,11 +801,16 @@ function poblarMSAreas(){
     opts.appendChild(div);
   });
 }
+function poblarFiltroTipoDash(){
+  const sel = document.getElementById("dashFiltroTipo");
+  sel.innerHTML = '<option value="">Todos</option>' + TIPOS_ORDEN.map(t=>`<option value="${t}">${TIPOS_INFO[t].icon} ${TIPOS_INFO[t].nombre}</option>`).join("");
+}
 function limpiarFiltrosDash(){
   document.querySelectorAll("#ms-area5s-opts input[type=checkbox]").forEach(cb=>cb.checked=false);
   document.getElementById("ms-area5s-label").textContent = "Todas las áreas";
   document.getElementById("dashFechaInicio").value = "";
   document.getElementById("dashFechaFin").value = "";
+  document.getElementById("dashFiltroTipo").value = "";
   actualizarDashboard(); renderHistorial();
 }
 
@@ -737,6 +837,7 @@ async function cargarDatosAdmin(){
   setLoading(true, "Cargando datos de administración...");
   try {
     poblarMSAreas();
+    poblarFiltroTipoDash();
     const [snapA, snapAcc] = await Promise.all([
       db.collection("auditorias5s").orderBy("fecha","desc").limit(500).get(),
       db.collection("acciones5s").orderBy("fecha","desc").limit(1000).get()
@@ -765,10 +866,12 @@ function poblarFiltroAreaAcciones(){
 
 function getAuditoriasFiltradas(){
   const areas = getSelectedMS("ms-area5s");
+  const tipo = document.getElementById("dashFiltroTipo").value;
   const fi = document.getElementById("dashFechaInicio").value;
   const ff = document.getElementById("dashFechaFin").value;
   let lista = [...STATE.auditorias];
   if (areas.length) lista = lista.filter(a=>areas.includes(a.area));
+  if (tipo) lista = lista.filter(a=>a.tipo===tipo);
   if (fi) lista = lista.filter(a=>a.fechaStr >= fi);
   if (ff) lista = lista.filter(a=>a.fechaStr <= ff);
   return lista;
@@ -786,7 +889,7 @@ function renderGauge(cid, valor, pctId){
     gaugesAdmin[cid] = new Chart(canvas.getContext("2d"), {
       type:"doughnut",
       data:{ datasets:[{ data:[v,100-v], backgroundColor:[col,"#e2e8f0"], borderWidth:0, cutout:"72%" }] },
-      options:{ animation:false, responsive:true, rotation:-90, circumference:180, plugins:{ legend:{display:false}, tooltip:{enabled:false} } }
+      options:{ animation:false, responsive:true, rotation:-90, circumference:180, plugins:{ legend:{display:false}, tooltip:{enabled:false}, datalabels:{display:false} } }
     });
   }
   if (pctId) document.getElementById(pctId).textContent = v + "%";
@@ -831,7 +934,22 @@ function actualizarGraficaArea(lista){
   chartArea = new Chart(ctx, {
     type:"bar",
     data:{ labels, datasets:[{ label:"Score General %", data, backgroundColor:data.map(v=>v?gaugeColor(v)+"cc":"#e2e8f0"), borderRadius:6 }] },
-    options:{ responsive:true, scales:{ y:{min:0,max:100,ticks:{callback:v=>v+"%"}} }, plugins:{ legend:{display:false} } }
+    options:{
+      responsive:true,
+      layout:{ padding:{ top:26 } },
+      scales:{ y:{min:0,max:100,ticks:{callback:v=>v+"%"}} },
+      plugins:{
+        legend:{display:false},
+        datalabels:{
+          display: ctx => ctx.dataset.data[ctx.dataIndex] > 0,
+          anchor:"end", align:"top", offset:2,
+          color:"#0f172a",
+          font:{ family:"'Barlow Condensed', sans-serif", weight:800, size:13 },
+          formatter:v=>v+"%"
+        }
+      }
+    },
+    plugins:[ChartDataLabels]
   });
 }
 
@@ -844,8 +962,21 @@ function actualizarGraficaTendencia(lista){
   if (chartTendencia) chartTendencia.destroy();
   chartTendencia = new Chart(ctx, {
     type:"line",
-    data:{ labels: semanas.map(s=>"Sem "+s), datasets:[{ label:"Score General %", data, borderColor:"#2563eb", backgroundColor:"#2563eb22", fill:true, tension:.35, pointRadius:4 }] },
-    options:{ responsive:true, scales:{ y:{min:0,max:100,ticks:{callback:v=>v+"%"}} } }
+    data:{ labels: semanas.map(s=>"Sem "+s), datasets:[{ label:"Score General %", data, borderColor:"#2563eb", backgroundColor:"#2563eb", fill:false, tension:.35, pointRadius:4, pointBackgroundColor:"#2563eb" }] },
+    options:{
+      responsive:true,
+      layout:{ padding:{ top:26 } },
+      scales:{ y:{min:0,max:100,ticks:{callback:v=>v+"%"}} },
+      plugins:{
+        datalabels:{
+          anchor:"end", align:"top", offset:4,
+          color:"#1e3a8a",
+          font:{ family:"'Barlow Condensed', sans-serif", weight:800, size:13 },
+          formatter:v=>v+"%"
+        }
+      }
+    },
+    plugins:[ChartDataLabels]
   });
 }
 
@@ -858,8 +989,9 @@ function renderHistorial(){
   lista.slice(0,300).forEach(a=>{
     const f = fechaDe(a.fecha);
     const c = a.scorePorCategoria || {};
+    const tipoInfo = TIPOS_INFO[a.tipo] || { nombre:a.tipo||"-", icon:"" };
     tbody.innerHTML += `<tr>
-      <td>${f.toLocaleDateString()}</td><td>${a.area}</td><td>${escapeHTML(a.auditor)}</td><td>${escapeHTML(a.proceso)}</td>
+      <td>${f.toLocaleDateString()}</td><td>${tipoInfo.icon} ${tipoInfo.nombre}</td><td>${a.area}</td><td>${escapeHTML(a.auditor)}</td><td>${escapeHTML(a.proceso)}</td>
       <td>${c["1S"]??"-"}%</td><td>${c["2S"]??"-"}%</td><td>${c["3S"]??"-"}%</td><td>${c["4S"]??"-"}%</td><td>${c["5S"]??"-"}%</td>
       <td><b style="color:${gaugeColor(a.scoreGeneral)}">${a.scoreGeneral}%</b></td>
       <td><button class="btn btn-azul btn-sm" onclick="verDetalleAuditoria('${a.id}')">👁 Ver</button></td>
@@ -870,9 +1002,10 @@ function renderHistorial(){
 async function verDetalleAuditoria(id){
   const a = STATE.auditorias.find(x=>x.id===id);
   if (!a) return;
-  document.getElementById("detalle-titulo").textContent = `${a.area} · ${a.proceso}`;
+  const tipoInfo = TIPOS_INFO[a.tipo] || { nombre:a.tipo||"-", icon:"" };
+  document.getElementById("detalle-titulo").textContent = `${tipoInfo.icon} ${a.area} · ${a.proceso}`;
   const f = fechaDe(a.fecha);
-  document.getElementById("detalle-meta").innerHTML = `${escapeHTML(a.auditor)} · ${f.toLocaleDateString()} ${f.toLocaleTimeString()} · Score general: <b style="color:${gaugeColor(a.scoreGeneral)}">${a.scoreGeneral}%</b>`;
+  document.getElementById("detalle-meta").innerHTML = `${tipoInfo.nombre} · ${escapeHTML(a.auditor)} · ${f.toLocaleDateString()} ${f.toLocaleTimeString()} · Score general: <b style="color:${gaugeColor(a.scoreGeneral)}">${a.scoreGeneral}%</b>`;
   const cont = document.getElementById("detalle-body");
   cont.innerHTML = "Cargando...";
   document.getElementById("modalDetalle").classList.add("abierto");
@@ -949,15 +1082,16 @@ function exportarAuditoriasExcel(){
   if (!STATE.auditorias.length) return notif("No hay auditorías para exportar", true);
   const rows = STATE.auditorias.map(a=>{
     const f = fechaDe(a.fecha); const c = a.scorePorCategoria || {};
+    const tipoInfo = TIPOS_INFO[a.tipo] || { nombre:a.tipo||"" };
     return {
       Fecha: f.toLocaleDateString(), Hora: f.toLocaleTimeString(), Semana: a.semana,
-      Area: a.area, Auditor: a.auditor, Proceso: a.proceso,
+      Tipo: tipoInfo.nombre, Area: a.area, Auditor: a.auditor, Proceso: a.proceso,
       "1S%": c["1S"]??"", "2S%": c["2S"]??"", "3S%": c["3S"]??"", "4S%": c["4S"]??"", "5S%": c["5S"]??"",
       "General%": a.scoreGeneral
     };
   });
   const ws = XLSX.utils.json_to_sheet(rows);
-  ws["!cols"] = [{wch:12},{wch:10},{wch:8},{wch:18},{wch:22},{wch:30},{wch:8},{wch:8},{wch:8},{wch:8},{wch:8},{wch:10}];
+  ws["!cols"] = [{wch:12},{wch:10},{wch:8},{wch:14},{wch:18},{wch:22},{wch:30},{wch:8},{wch:8},{wch:8},{wch:8},{wch:8},{wch:10}];
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, "Auditorias_5S");
   XLSX.writeFile(wb, `Auditorias_5S_${new Date().toISOString().slice(0,10)}.xlsx`);
@@ -969,16 +1103,17 @@ function exportarDetalleExcel(){
   const rows = [];
   STATE.auditorias.forEach(a=>{
     const f = fechaDe(a.fecha);
+    const tipoInfo = TIPOS_INFO[a.tipo] || { nombre:a.tipo||"" };
     a.respuestas.forEach(r=>{
       rows.push({
-        Fecha: f.toLocaleDateString(), Area: a.area, Auditor: a.auditor, Proceso: a.proceso,
+        Fecha: f.toLocaleDateString(), Tipo: tipoInfo.nombre, Area: a.area, Auditor: a.auditor, Proceso: a.proceso,
         Categoria: r.categoria, Pregunta: r.pregunta, Respuesta: r.respuesta==='si'?'Sí':'No',
         Cumple: r.cumple ? "Sí" : "No", Comentario: r.comentario||"", Foto: r.foto||""
       });
     });
   });
   const ws = XLSX.utils.json_to_sheet(rows);
-  ws["!cols"] = [{wch:12},{wch:18},{wch:22},{wch:30},{wch:8},{wch:60},{wch:10},{wch:8},{wch:40},{wch:50}];
+  ws["!cols"] = [{wch:12},{wch:14},{wch:18},{wch:22},{wch:30},{wch:8},{wch:60},{wch:10},{wch:8},{wch:40},{wch:50}];
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, "Detalle");
   XLSX.writeFile(wb, `Detalle_Auditorias_5S_${new Date().toISOString().slice(0,10)}.xlsx`);
@@ -1031,8 +1166,21 @@ function descargarPlantillaEmpleados(){
 }
 
 let preguntasEdit = [];
+let tipoAdminActual = "produccion";
+
+function renderPreguntasTipoTabs(){
+  const cont = document.getElementById("preguntasTipoTabs");
+  cont.innerHTML = TIPOS_ORDEN.map(t=>`<button type="button" class="admin-subtab-btn ${t===tipoAdminActual?'activo':''}" onclick="cambiarTipoAdminPreguntas('${t}')">${TIPOS_INFO[t].icon} ${TIPOS_INFO[t].nombre}</button>`).join("");
+}
+
+function cambiarTipoAdminPreguntas(tipo){
+  tipoAdminActual = tipo;
+  renderPreguntasTipoTabs();
+  dibujarPreguntasAdmin();
+}
 
 function initPreguntasAdminCats(){
+  renderPreguntasTipoTabs();
   const cont = document.getElementById("preguntasAdminCats");
   cont.innerHTML = Object.keys(CAT_INFO).map(cat=>{
     const info = CAT_INFO[cat];
@@ -1045,7 +1193,7 @@ function initPreguntasAdminCats(){
 }
 
 function renderPreguntasAdmin(){
-  preguntasEdit = PREGUNTAS_5S.map(p=>({...p}));
+  preguntasEdit = PREGUNTAS_TODAS.map(p=>({...p}));
   dibujarPreguntasAdmin();
 }
 
@@ -1053,9 +1201,9 @@ function dibujarPreguntasAdmin(){
   Object.keys(CAT_INFO).forEach(cat=>{
     const cont = document.getElementById("preg-admin-list-"+cat);
     if (!cont) return;
-    const items = preguntasEdit.filter(p=>p.cat===cat);
+    const items = preguntasEdit.filter(p=>p.cat===cat && p.tipo===tipoAdminActual);
     if (!items.length){
-      cont.innerHTML = `<p class="pregunta-admin-empty">Sin preguntas en esta categoría.</p>`;
+      cont.innerHTML = `<p class="pregunta-admin-empty">Sin preguntas en esta categoría para ${TIPOS_INFO[tipoAdminActual].nombre}.</p>`;
       return;
     }
     cont.innerHTML = items.map(p=>{
@@ -1086,7 +1234,7 @@ function actualizarCampoPregunta(idx, campo, valor){
 }
 
 function agregarPreguntaAdmin(cat){
-  preguntasEdit.push({ id:null, cat, invertido:false, texto:"" });
+  preguntasEdit.push({ id:null, tipo:tipoAdminActual, cat, invertido:false, texto:"" });
   dibujarPreguntasAdmin();
 }
 
@@ -1103,15 +1251,17 @@ async function guardarPreguntas(){
   setLoading(true, "Guardando preguntas...");
   try {
     const ordenado = [];
-    Object.keys(CAT_INFO).forEach(cat=>{
-      preguntasEdit.filter(p=>p.cat===cat).forEach(p=>ordenado.push(p));
+    TIPOS_ORDEN.forEach(tipo=>{
+      Object.keys(CAT_INFO).forEach(cat=>{
+        preguntasEdit.filter(p=>p.tipo===tipo && p.cat===cat).forEach(p=>ordenado.push(p));
+      });
     });
     const snapOld = await db.collection("preguntas5s").get();
     const batch = db.batch();
     snapOld.forEach(d=>batch.delete(d.ref));
     ordenado.forEach((p,i)=>{
       const ref = db.collection("preguntas5s").doc(String(i+1));
-      batch.set(ref, { cat:p.cat, invertido:!!p.invertido, texto:p.texto.trim(), orden:i });
+      batch.set(ref, { tipo:p.tipo, cat:p.cat, invertido:!!p.invertido, texto:p.texto.trim(), orden:i });
     });
     await batch.commit();
     await cargarPreguntas();
@@ -1129,7 +1279,10 @@ async function guardarPreguntas(){
 
 function restaurarPreguntasDefault(){
   if (!confirm("Esto reemplazará la lista en edición con las preguntas originales de la app (sin guardar todavía). ¿Continuar?")) return;
-  preguntasEdit = PREGUNTAS_5S_DEFAULT.map(p=>({...p}));
+  preguntasEdit = [];
+  TIPOS_ORDEN.forEach(tipo=>{
+    PREGUNTAS_5S_DEFAULT_POR_TIPO[tipo].forEach(p=>preguntasEdit.push({...p, tipo}));
+  });
   dibujarPreguntasAdmin();
 }
 
