@@ -339,7 +339,23 @@ tbody tr:hover{background:var(--gris-fondo);}
         </div>
         <div class="campo"><label>Auditor</label><input type="text" id="aud-auditor" placeholder="Nombre del auditor"></div>
       </div>
-      <div class="campo"><label>Proceso Auditado</label><input type="text" id="aud-proceso" placeholder="Ej: Ensamble de estructura primaria"></div>
+      <div class="campo"><label>Proceso Auditado</label>
+        <select id="aud-proceso">
+          <option value="">Selecciona proceso</option>
+          <option>Laminado</option>
+          <option>Prensas</option>
+          <option>CNC</option>
+          <option>Maquinado</option>
+          <option>Insertos</option>
+          <option>Bondeo</option>
+          <option>Lijado y Pintura</option>
+          <option>Decorado</option>
+          <option>Ensamble Final</option>
+          <option>Test</option>
+          <option>Inspección Final</option>
+          <option>Envíos</option>
+        </select>
+      </div>
     </div>
     <div id="preguntasContainer"></div>
     <div class="card" style="text-align:center;">
@@ -723,18 +739,33 @@ async function guardarAuditoria(){
     };
     const ref = await db.collection("auditorias5s").add(auditoria);
     const batch = db.batch();
+    const nuevasAcciones = [];
     respuestas.forEach(r => {
       r.acciones.forEach(a => {
         const accRef = db.collection("acciones5s").doc();
-        batch.set(accRef, {
+        const accionData = {
           auditoriaId: ref.id, tipo: tipoActual, area, categoria:r.categoria, preguntaId:r.id, preguntaTexto:r.pregunta,
           descripcion:a.descripcion, responsable:a.responsable, fechaLimite:a.fechaLimite,
           estado:"pendiente", fecha:ahora, fechaStr, semana,
           numeroEmpleadoAuditor: usuarioActual.numero, nombreEmpleadoAuditor: usuarioActual.nombre, auditor
-        });
+        };
+        batch.set(accRef, accionData);
+        nuevasAcciones.push({ id: accRef.id, ...accionData });
       });
     });
     await batch.commit();
+
+    // Actualizamos el estado local (STATE) para que el panel de administración
+    // refleje esta nueva auditoría sin necesidad de refrescar la página
+    STATE.auditorias.unshift({ id: ref.id, ...auditoria });
+    STATE.acciones.unshift(...nuevasAcciones);
+    if (STATE.adminCargado){
+      poblarFiltroAreaAcciones();
+      actualizarDashboard();
+      renderHistorial();
+      renderPlanAcciones();
+    }
+
     notif("✅ Auditoría guardada correctamente — Score general: " + general + "%");
     resetFormulario();
   } catch(e){
