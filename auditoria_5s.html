@@ -359,51 +359,110 @@ tbody tr:hover{background:var(--gris-fondo);}
     <div class="registrador-banner"><span style="font-size:20px;">👤</span><div><div class="rb-label">Auditoría registrada por</div><div class="rb-nombre" id="banner-nombre"></div></div></div>
 
     <div class="card" style="padding:12px;">
-      <div class="tipo-tabs" id="tipoTabs"></div>
+      <div class="tipo-tabs" id="modoTabs">
+        <button type="button" class="tipo-tab-btn activo" id="modoBtn-checklist" onclick="cambiarModoAuditoria('checklist')">📋 Auditoría por Checklist</button>
+        <button type="button" class="tipo-tab-btn" id="modoBtn-dinamico" onclick="cambiarModoAuditoria('dinamico')">🔍 Recorrido Dinámico (Experto)</button>
+      </div>
     </div>
 
-    <div class="resumen-card" id="resumenCard">
-      <div class="resumen-top">
-        <span id="resumen-contador">0/10 preguntas respondidas</span>
-        <span class="resumen-general-pct" id="resumen-general">0%</span>
+    <div id="wrapChecklist">
+      <div class="card" style="padding:12px;">
+        <div class="tipo-tabs" id="tipoTabs"></div>
       </div>
-      <div class="resumen-barras" id="resumenBarras"></div>
-    </div>
-    <div class="card">
-      <div class="card-titulo">📍 Datos de la Auditoría</div>
-      <div class="grid2">
-        <div class="campo">
-          <label>Área</label>
-          <select id="aud-area">
-            <option value="">Selecciona área</option>
-            <option>A330</option><option>A350</option><option>ALMACENES</option><option>BOEING</option>
-            <option>COMAC</option><option>ENVIOS</option><option>FTF A220</option><option>LEGACY</option>
-            <option>METAL WORKS</option><option>MONUMENTOS</option><option>PROCESOS PRIMARIOS</option><option>SHIPLOOSE</option>
+
+      <div class="resumen-card" id="resumenCard">
+        <div class="resumen-top">
+          <span id="resumen-contador">0/10 preguntas respondidas</span>
+          <span class="resumen-general-pct" id="resumen-general">0%</span>
+        </div>
+        <div class="resumen-barras" id="resumenBarras"></div>
+      </div>
+      <div class="card">
+        <div class="card-titulo">📍 Datos de la Auditoría</div>
+        <div class="grid2">
+          <div class="campo">
+            <label>Área</label>
+            <select id="aud-area">
+              <option value="">Selecciona área</option>
+              <option>A330</option><option>A350</option><option>ALMACENES</option><option>BOEING</option>
+              <option>COMAC</option><option>ENVIOS</option><option>FTF A220</option><option>LEGACY</option>
+              <option>METAL WORKS</option><option>MONUMENTOS</option><option>PROCESOS PRIMARIOS</option><option>SHIPLOOSE</option>
+            </select>
+          </div>
+          <div class="campo"><label>Auditor</label><input type="text" id="aud-auditor" placeholder="Nombre del auditor"></div>
+        </div>
+        <div class="campo"><label>Proceso Auditado</label>
+          <select id="aud-proceso">
+            <option value="">Selecciona proceso</option>
+            <option>Laminado</option>
+            <option>Prensas</option>
+            <option>CNC</option>
+            <option>Maquinado</option>
+            <option>Insertos</option>
+            <option>Bondeo</option>
+            <option>Lijado y Pintura</option>
+            <option>Decorado</option>
+            <option>Ensamble Final</option>
+            <option>Test</option>
+            <option>Inspección Final</option>
+            <option>Envíos</option>
           </select>
         </div>
-        <div class="campo"><label>Auditor</label><input type="text" id="aud-auditor" placeholder="Nombre del auditor"></div>
       </div>
-      <div class="campo"><label>Proceso Auditado</label>
-        <select id="aud-proceso">
-          <option value="">Selecciona proceso</option>
-          <option>Laminado</option>
-          <option>Prensas</option>
-          <option>CNC</option>
-          <option>Maquinado</option>
-          <option>Insertos</option>
-          <option>Bondeo</option>
-          <option>Lijado y Pintura</option>
-          <option>Decorado</option>
-          <option>Ensamble Final</option>
-          <option>Test</option>
-          <option>Inspección Final</option>
-          <option>Envíos</option>
-        </select>
+      <div id="preguntasContainer"></div>
+      <div class="card" style="text-align:center;">
+        <button class="btn btn-verde btn-full" id="btnGuardarAuditoria" onclick="guardarAuditoria()">💾 Guardar Auditoría</button>
       </div>
     </div>
-    <div id="preguntasContainer"></div>
-    <div class="card" style="text-align:center;">
-      <button class="btn btn-verde btn-full" id="btnGuardarAuditoria" onclick="guardarAuditoria()">💾 Guardar Auditoría</button>
+
+    <div id="wrapDinamico" style="display:none">
+      <div class="card">
+        <div class="card-titulo">📍 Datos del Recorrido</div>
+        <div class="grid2">
+          <div class="campo">
+            <label>Área</label>
+            <select id="din-area">
+              <option value="">Selecciona área</option>
+              <option>A330</option><option>A350</option><option>ALMACENES</option><option>BOEING</option>
+              <option>COMAC</option><option>ENVIOS</option><option>FTF A220</option><option>LEGACY</option>
+              <option>METAL WORKS</option><option>MONUMENTOS</option><option>PROCESOS PRIMARIOS</option><option>SHIPLOOSE</option>
+            </select>
+          </div>
+          <div class="campo"><label>Auditor</label><input type="text" id="din-auditor" placeholder="Nombre del auditor"></div>
+        </div>
+        <div class="campo" style="margin-bottom:0;"><label>Proceso / Zona (opcional)</label><input type="text" id="din-proceso" placeholder="Ej: Línea de ensamble, almacén de insertos..."></div>
+      </div>
+
+      <div class="resumen-card" id="dinResumenCard">
+        <div class="resumen-top">
+          <span id="din-contador">0 hallazgos registrados</span>
+          <span class="resumen-general-pct" id="din-total-badge">0</span>
+        </div>
+        <div class="resumen-barras" id="dinResumenBarras"></div>
+      </div>
+
+      <p style="font-size:12.5px;color:var(--texto-suave);margin:-4px 0 10px;line-height:1.5;">
+        Recorre el área y registra un hallazgo dentro de la S que corresponda: toma la foto, describe lo observado, define la acción correctiva, el responsable y la fecha límite. Puedes agregar tantos hallazgos como necesites en cada S.
+      </p>
+
+      <div id="dinCategorias"></div>
+
+      <div class="card" style="text-align:center;">
+        <button class="btn btn-morado btn-full" id="btnFinalizarDinamico" onclick="finalizarRecorridoDinamico()">🏁 Finalizar Recorrido y Generar Reporte</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modalReporteDinamico">
+  <div class="modal-box-large" style="position:relative;">
+    <button class="modal-close-x" onclick="document.getElementById('modalReporteDinamico').classList.remove('abierto')">✕</button>
+    <div class="modal-titulo" id="reporteDin-titulo" style="text-align:left;font-size:19px;">🔍 Reporte de Recorrido Dinámico</div>
+    <div class="modal-sub" id="reporteDin-meta" style="text-align:left;margin-bottom:14px;">—</div>
+    <div id="reporteDin-body"></div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:14px;">
+      <button class="btn btn-verde" onclick="exportarReporteDinamicoExcel()">📥 Exportar Reporte (Excel)</button>
+      <button class="btn btn-outline" onclick="document.getElementById('modalReporteDinamico').classList.remove('abierto')">Cerrar</button>
     </div>
   </div>
 </div>
@@ -483,6 +542,10 @@ let tipoActual = "produccion";
 let usuarioActual = { numero:"", nombre:"" };
 let respuestasActuales = {};
 let accionCounter = 0;
+let modoActual = "checklist";
+let dinInicializado = false;
+let hallazgoCounter = 0;
+let ultimoRecorridoDinamico = null;
 const STATE = { auditorias:[], acciones:[], adminCargado:false, adminDesbloqueado:false };
 let gaugesAdmin = {}, chartArea = null, chartTendencia = null;
 
@@ -594,6 +657,12 @@ function logout(){
   document.getElementById("login-hint").innerText = "";
   document.getElementById("login-estado").innerText = "";
   document.getElementById("modalLogin").classList.add("abierto");
+  modoActual = "checklist";
+  dinInicializado = false;
+  document.getElementById("modoBtn-checklist").classList.add("activo");
+  document.getElementById("modoBtn-dinamico").classList.remove("activo");
+  document.getElementById("wrapChecklist").style.display = "block";
+  document.getElementById("wrapDinamico").style.display = "none";
 }
 
 function inicializarFormulario(){
@@ -799,8 +868,6 @@ async function guardarAuditoria(){
     });
     await batch.commit();
 
-    // Actualizamos el estado local (STATE) para que el panel de administración
-    // refleje esta nueva auditoría sin necesidad de refrescar la página
     STATE.auditorias.unshift({ id: ref.id, ...auditoria });
     STATE.acciones.unshift(...nuevasAcciones);
     if (STATE.adminCargado){
@@ -829,6 +896,268 @@ function resetFormulario(){
   actualizarResumen();
   window.scrollTo({top:0, behavior:"smooth"});
 }
+
+/* ===================== RECORRIDO DINÁMICO (auditor experimentado) ===================== */
+
+function cambiarModoAuditoria(modo){
+  if (modo === modoActual) return;
+  modoActual = modo;
+  document.getElementById("modoBtn-checklist").classList.toggle("activo", modo==="checklist");
+  document.getElementById("modoBtn-dinamico").classList.toggle("activo", modo==="dinamico");
+  document.getElementById("wrapChecklist").style.display = modo==="checklist" ? "block" : "none";
+  document.getElementById("wrapDinamico").style.display = modo==="dinamico" ? "block" : "none";
+  if (modo === "dinamico" && !dinInicializado){
+    dinInicializado = true;
+    document.getElementById("din-auditor").value = usuarioActual.nombre;
+    initDinamicoUI();
+    initDinResumenBarras();
+    actualizarResumenDinamico();
+  }
+  window.scrollTo({top:0, behavior:"smooth"});
+}
+
+function initDinamicoUI(){
+  const cont = document.getElementById("dinCategorias");
+  cont.innerHTML = Object.keys(CAT_INFO).map(cat=>{
+    const info = CAT_INFO[cat];
+    return `
+    <div class="cat-header" style="border-left-color:${info.color}">
+      <span class="cat-badge" style="background:${info.color}22;color:${info.color}">${info.nombre}</span>
+    </div>
+    <div class="card" style="padding-top:14px;">
+      <div id="din-lista-${cat}"></div>
+      <button type="button" class="btn btn-outline btn-full" onclick="agregarHallazgoDinamico('${cat}')">+ Agregar hallazgo en ${cat}</button>
+    </div>`;
+  }).join("");
+}
+
+function initDinResumenBarras(){
+  const cont = document.getElementById("dinResumenBarras");
+  cont.innerHTML = Object.keys(CAT_INFO).map(c=>`
+    <div class="resumen-barra-item">
+      <div class="resumen-barra-cat" style="color:${CAT_INFO[c].color}">${c}</div>
+      <div class="resumen-barra-track"><div class="resumen-barra-fill" id="dinbarra-${c}" style="background:${CAT_INFO[c].color}"></div></div>
+      <div class="resumen-barra-txt" id="dinbarratxt-${c}">0</div>
+    </div>`).join("");
+}
+
+function agregarHallazgoDinamico(cat){
+  const hid = "hz" + (++hallazgoCounter);
+  const cont = document.getElementById("din-lista-"+cat);
+  const n = cont.children.length + 1;
+  const div = document.createElement("div");
+  div.className = "card pregunta-card";
+  div.id = hid;
+  div.style.background = "#f8fafc";
+  div.innerHTML = `
+    <div class="pregunta-num">Hallazgo ${n} · ${cat}</div>
+    <div class="campo">
+      <label>📷 Foto de evidencia</label>
+      <input type="file" accept="image/*" capture="environment" id="${hid}-foto" onchange="previewFotoHallazgo('${hid}')">
+      <img id="${hid}-preview" class="foto-preview">
+    </div>
+    <div class="campo">
+      <label>💬 Comentario / Hallazgo</label>
+      <textarea id="${hid}-coment" placeholder="¿Qué se observó en el área?"></textarea>
+    </div>
+    <div class="campo">
+      <label>🛠 Acción correctiva</label>
+      <input type="text" id="${hid}-accion" placeholder="Acción a realizar">
+    </div>
+    <div class="grid2">
+      <div class="campo"><label>Responsable</label><input type="text" id="${hid}-resp" placeholder="Responsable"></div>
+      <div class="campo" style="margin-bottom:0;"><label>Fecha límite</label><input type="date" id="${hid}-fecha"></div>
+    </div>
+    <button type="button" class="btn btn-rojo btn-sm btn-full" style="margin-top:10px;" onclick="eliminarHallazgoDinamico('${hid}')">🗑 Eliminar hallazgo</button>`;
+  cont.appendChild(div);
+  actualizarResumenDinamico();
+  div.scrollIntoView({behavior:"smooth", block:"center"});
+}
+
+function eliminarHallazgoDinamico(hid){
+  const el = document.getElementById(hid);
+  if (el) el.remove();
+  renumerarHallazgos();
+  actualizarResumenDinamico();
+}
+
+function renumerarHallazgos(){
+  Object.keys(CAT_INFO).forEach(cat=>{
+    const cont = document.getElementById("din-lista-"+cat);
+    if (!cont) return;
+    [...cont.children].forEach((div,i)=>{
+      const num = div.querySelector(".pregunta-num");
+      if (num) num.textContent = `Hallazgo ${i+1} · ${cat}`;
+    });
+  });
+}
+
+function previewFotoHallazgo(hid){
+  const file = document.getElementById(hid+"-foto").files[0];
+  const img = document.getElementById(hid+"-preview");
+  if (!file){ img.style.display = "none"; img.src=""; return; }
+  const reader = new FileReader();
+  reader.onload = e => { img.src = e.target.result; img.style.display = "block"; };
+  reader.readAsDataURL(file);
+}
+
+function actualizarResumenDinamico(){
+  let total = 0;
+  Object.keys(CAT_INFO).forEach(c=>{
+    const cont = document.getElementById("din-lista-"+c);
+    const n = cont ? cont.children.length : 0;
+    total += n;
+    const barra = document.getElementById("dinbarra-"+c);
+    const txt = document.getElementById("dinbarratxt-"+c);
+    if (barra) barra.style.width = Math.min(n*20,100) + "%";
+    if (txt) txt.innerText = n;
+  });
+  document.getElementById("din-contador").innerText = total + (total===1 ? " hallazgo registrado" : " hallazgos registrados");
+  document.getElementById("din-total-badge").innerText = total;
+}
+
+async function finalizarRecorridoDinamico(){
+  const area = document.getElementById("din-area").value;
+  const auditor = document.getElementById("din-auditor").value.trim();
+  const proceso = document.getElementById("din-proceso").value.trim();
+  if (!area || !auditor) return notif("Completa Área y Auditor antes de finalizar", true);
+
+  const hallazgos = [];
+  Object.keys(CAT_INFO).forEach(cat=>{
+    const cont = document.getElementById("din-lista-"+cat);
+    if (!cont) return;
+    [...cont.children].forEach(div=>{
+      const hid = div.id;
+      const comentario = document.getElementById(hid+"-coment").value.trim();
+      const accion = document.getElementById(hid+"-accion").value.trim();
+      const responsable = document.getElementById(hid+"-resp").value.trim();
+      const fechaLimite = document.getElementById(hid+"-fecha").value;
+      const file = document.getElementById(hid+"-foto").files[0];
+      if (!comentario && !accion && !file) return;
+      hallazgos.push({ hid, categoria:cat, comentario, accion, responsable, fechaLimite, file });
+    });
+  });
+
+  if (!hallazgos.length) return notif("Agrega al menos un hallazgo con información antes de finalizar", true);
+
+  const btn = document.getElementById("btnFinalizarDinamico");
+  btn.disabled = true; btn.innerText = "Guardando...";
+  setLoading(true, "Guardando recorrido dinámico...");
+  try {
+    const ahora = new Date(), fechaStr = ahora.toISOString().split("T")[0], semana = getSemanaActual(ahora);
+    const hallazgosGuardados = [];
+    for (let i=0; i<hallazgos.length; i++){
+      const h = hallazgos[i];
+      let fotoUrl = "";
+      if (h.file){
+        setLoading(true, `Subiendo foto ${i+1}/${hallazgos.length}...`);
+        fotoUrl = await subirCloudinary(h.file);
+      }
+      hallazgosGuardados.push({ categoria:h.categoria, comentario:h.comentario, accion:h.accion, responsable:h.responsable, fechaLimite:h.fechaLimite, foto:fotoUrl });
+    }
+    setLoading(true, "Guardando registro...");
+    const conteoPorCategoria = {};
+    Object.keys(CAT_INFO).forEach(c => conteoPorCategoria[c] = hallazgosGuardados.filter(h=>h.categoria===c).length);
+
+    const recorrido = {
+      numeroEmpleado: usuarioActual.numero, nombreEmpleado: usuarioActual.nombre,
+      tipo: "dinamico", area, auditor, proceso,
+      fecha: ahora, fechaStr, semana,
+      hallazgos: hallazgosGuardados, totalHallazgos: hallazgosGuardados.length, conteoPorCategoria
+    };
+    const ref = await db.collection("recorridos5s").add(recorrido);
+
+    const batch = db.batch();
+    const nuevasAcciones = [];
+    hallazgosGuardados.forEach(h=>{
+      if (!h.accion) return;
+      const accRef = db.collection("acciones5s").doc();
+      const accionData = {
+        recorridoId: ref.id, tipo:"dinamico", area, categoria:h.categoria, preguntaId:null,
+        preguntaTexto: h.comentario || "Recorrido dinámico 5S",
+        descripcion: h.accion, responsable: h.responsable, fechaLimite: h.fechaLimite,
+        estado:"pendiente", fecha:ahora, fechaStr, semana, foto: h.foto || "",
+        numeroEmpleadoAuditor: usuarioActual.numero, nombreEmpleadoAuditor: usuarioActual.nombre, auditor
+      };
+      batch.set(accRef, accionData);
+      nuevasAcciones.push({ id: accRef.id, ...accionData });
+    });
+    await batch.commit();
+
+    STATE.acciones.unshift(...nuevasAcciones);
+    if (STATE.adminCargado){
+      poblarFiltroAreaAcciones();
+      renderPlanAcciones();
+    }
+
+    notif("✅ Recorrido guardado — " + hallazgosGuardados.length + " hallazgo(s) registrados");
+    mostrarReporteDinamico({ ...recorrido, id: ref.id });
+    resetDinamico();
+  } catch(e){
+    console.error(e);
+    notif("Error al guardar el recorrido: " + e.message, true);
+  } finally {
+    btn.disabled = false; btn.innerText = "🏁 Finalizar Recorrido y Generar Reporte";
+    setLoading(false);
+  }
+}
+
+function resetDinamico(){
+  document.getElementById("din-area").value = "";
+  document.getElementById("din-proceso").value = "";
+  Object.keys(CAT_INFO).forEach(c=>{
+    const cont = document.getElementById("din-lista-"+c);
+    if (cont) cont.innerHTML = "";
+  });
+  actualizarResumenDinamico();
+}
+
+function mostrarReporteDinamico(recorrido){
+  ultimoRecorridoDinamico = recorrido;
+  const f = fechaDe(recorrido.fecha);
+  document.getElementById("reporteDin-meta").innerHTML =
+    `${escapeHTML(recorrido.area)} · ${escapeHTML(recorrido.auditor)}${recorrido.proceso ? ' · '+escapeHTML(recorrido.proceso) : ''} · ${f.toLocaleDateString()} ${f.toLocaleTimeString()} · <b>${recorrido.totalHallazgos} hallazgo(s)</b>`;
+  const cont = document.getElementById("reporteDin-body");
+  cont.innerHTML = "";
+  Object.keys(CAT_INFO).forEach(cat=>{
+    const info = CAT_INFO[cat];
+    const items = recorrido.hallazgos.filter(h=>h.categoria===cat);
+    if (!items.length) return;
+    cont.innerHTML += `<div class="cat-header" style="border-left-color:${info.color}"><span class="cat-badge" style="background:${info.color}22;color:${info.color}">${info.nombre} · ${items.length} hallazgo(s)</span></div>`;
+    items.forEach(h=>{
+      cont.innerHTML += `<div class="detalle-pregunta" style="border-left-color:${info.color}">
+        ${h.comentario ? `<div class="detalle-pregunta-texto">💬 ${escapeHTML(h.comentario)}</div>` : ""}
+        ${h.foto ? `<img src="${h.foto}" class="detalle-foto" onclick="window.open('${h.foto}','_blank')">` : ""}
+        <div class="detalle-accion-row">
+          <span style="flex:1;min-width:160px;"><b>🛠 Acción:</b> ${escapeHTML(h.accion || "—")}</span>
+          <span class="acc-resp-tag">👤 ${escapeHTML(h.responsable||'-')}</span>
+          <span class="acc-fecha-tag">📅 ${h.fechaLimite||'-'}</span>
+        </div>
+      </div>`;
+    });
+  });
+  document.getElementById("modalReporteDinamico").classList.add("abierto");
+}
+
+function exportarReporteDinamicoExcel(){
+  if (!ultimoRecorridoDinamico) return notif("No hay un reporte para exportar", true);
+  const r = ultimoRecorridoDinamico;
+  const f = fechaDe(r.fecha);
+  const rows = r.hallazgos.map(h=>({
+    Fecha: f.toLocaleDateString(), Area: r.area, Auditor: r.auditor, "Proceso/Zona": r.proceso||"",
+    Categoria: CAT_INFO[h.categoria]?.nombre || h.categoria,
+    Comentario: h.comentario||"", "Accion correctiva": h.accion||"",
+    Responsable: h.responsable||"", "Fecha limite": h.fechaLimite||"", Foto: h.foto||""
+  }));
+  const ws = XLSX.utils.json_to_sheet(rows);
+  ws["!cols"] = [{wch:12},{wch:18},{wch:22},{wch:22},{wch:20},{wch:45},{wch:35},{wch:20},{wch:14},{wch:50}];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Recorrido_Dinamico");
+  XLSX.writeFile(wb, `Recorrido_Dinamico_5S_${r.fechaStr}.xlsx`);
+  notif("Excel exportado ✅");
+}
+
+/* =================== FIN RECORRIDO DINÁMICO =================== */
 
 document.addEventListener("click", e => {
   document.querySelectorAll(".multi-select-wrap").forEach(wrap => {
@@ -995,7 +1324,6 @@ function actualizarGraficaArea(lista){
   const porArea = {}; AREAS_5S.forEach(a=>porArea[a]=[]);
   lista.forEach(a=>{ if (porArea[a.area]) porArea[a.area].push(a.scoreGeneral||0); });
 
-  // Calculamos el promedio por área y las ordenamos de mayor a menor
   const combinado = AREAS_5S.map(a=>{
     const v = porArea[a];
     return { area:a, valor: v.length ? Math.round(v.reduce((s,x)=>s+x,0)/v.length) : 0 };
