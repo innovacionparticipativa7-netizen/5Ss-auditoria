@@ -2,12 +2,14 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Recorrido Experto 5S</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
+<title>Auditoría 5S</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;900&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet">
 
 <style>
@@ -17,94 +19,140 @@
   --gris-fondo:#f1f5f9; --gris-borde:#e2e8f0; --texto:#0f172a; --texto-suave:#64748b;
 }
 *{box-sizing:border-box;margin:0;padding:0;}
-html,body{width:100%;overflow-x:hidden;}
 body{font-family:'Barlow',sans-serif;background:var(--gris-fondo);min-height:100vh;}
-
 #loading-overlay{position:fixed;inset:0;background:rgba(255,255,255,.93);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;gap:12px;}
 .spinner{width:38px;height:38px;border:4px solid var(--gris-borde);border-top-color:var(--azul-medio);border-radius:50%;animation:spin .75s linear infinite;}
 @keyframes spin{to{transform:rotate(360deg);}}
-
 #notif{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--azul);color:#fff;padding:10px 22px;border-radius:30px;font-size:13px;font-weight:600;box-shadow:0 8px 24px rgba(0,0,0,.25);z-index:9998;opacity:0;pointer-events:none;transition:opacity .25s;white-space:nowrap;max-width:90vw;text-align:center;}
 #notif.show{opacity:1;}
 #notif.err{background:var(--rojo);}
-
 .modal-overlay{display:none;position:fixed;inset:0;z-index:5000;background:rgba(0,0,0,.65);backdrop-filter:blur(5px);align-items:center;justify-content:center;}
 .modal-overlay.abierto{display:flex;}
-.modal-box{background:#fff;border-radius:20px;padding:32px 24px;width:100%;max-width:380px;margin:20px;box-shadow:0 24px 60px rgba(0,0,0,.4);animation:popIn .2s ease;}
-.modal-box-large{background:#fff;border-radius:18px;padding:18px;width:100%;max-width:720px;max-height:90vh;overflow-y:auto;margin:16px;box-shadow:0 24px 60px rgba(0,0,0,.4);animation:popIn .2s ease;}
+.modal-box{background:#fff;border-radius:20px;padding:32px 28px;width:100%;max-width:380px;margin:20px;box-shadow:0 24px 60px rgba(0,0,0,.4);animation:popIn .2s ease;}
+.modal-box-large{background:#fff;border-radius:18px;padding:22px;width:100%;max-width:720px;max-height:90vh;overflow-y:auto;margin:20px;box-shadow:0 24px 60px rgba(0,0,0,.4);animation:popIn .2s ease;}
 @keyframes popIn{from{transform:scale(.93);opacity:0;}to{transform:scale(1);opacity:1;}}
 .modal-icono{font-size:38px;text-align:center;margin-bottom:8px;}
 .modal-titulo{font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:900;color:var(--azul);text-align:center;letter-spacing:1px;margin-bottom:4px;}
 .modal-sub{font-size:13px;color:var(--texto-suave);text-align:center;margin-bottom:20px;}
 .nombre-hint{font-size:13px;color:var(--azul-medio);font-weight:600;margin-top:4px;min-height:18px;}
-.modal-close-x{position:absolute;top:14px;right:16px;font-size:20px;cursor:pointer;color:var(--texto-suave);background:none;border:none;}
-
-.app-header{background:linear-gradient(135deg,var(--azul) 0%,#1e40af 100%);padding:13px 16px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 4px 20px rgba(0,0,0,.3);position:sticky;top:0;z-index:90;}
-.header-left{display:flex;align-items:center;gap:10px;min-width:0;}
-.header-logo{width:38px;height:38px;background:var(--amarillo);border-radius:10px;display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:15px;color:var(--azul);flex-shrink:0;}
-.header-title{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:15px;color:#fff;letter-spacing:.5px;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.header-sub{font-size:9.5px;color:rgba(255,255,255,.55);margin-top:1px;}
-.btn-admin-discreto{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);color:rgba(255,255,255,.75);font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;padding:8px 14px;border-radius:8px;cursor:pointer;letter-spacing:.5px;text-transform:uppercase;flex-shrink:0;}
-
-.container{max-width:640px;margin:0 auto;padding:14px;padding-bottom:60px;}
-.card{background:#fff;border-radius:14px;padding:16px;box-shadow:0 2px 12px rgba(0,0,0,.07);margin-bottom:14px;}
-.card-titulo{font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:700;color:var(--texto);margin-bottom:12px;display:flex;align-items:center;gap:8px;}
-
-.registrador-banner{background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:10px;padding:10px 14px;display:flex;align-items:center;gap:10px;margin-bottom:14px;}
-.rb-label{font-size:10.5px;color:var(--texto-suave);font-weight:600;text-transform:uppercase;letter-spacing:.5px;}
+.modal-close-x{position:absolute;top:14px;right:18px;font-size:20px;cursor:pointer;color:var(--texto-suave);background:none;border:none;}
+.app-header{background:linear-gradient(135deg,var(--azul) 0%,#1e40af 100%);padding:13px 20px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 4px 20px rgba(0,0,0,.3);flex-wrap:wrap;gap:8px;}
+.header-left{display:flex;align-items:center;gap:12px;}
+.header-logo{width:40px;height:40px;background:var(--amarillo);border-radius:10px;display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:16px;color:var(--azul);flex-shrink:0;}
+.header-title{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:17px;color:#fff;letter-spacing:1px;}
+.header-sub{font-size:10.5px;color:rgba(255,255,255,.5);margin-top:1px;}
+.btn-admin-discreto{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:rgba(255,255,255,.6);font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:600;padding:7px 14px;border-radius:8px;cursor:pointer;letter-spacing:.5px;text-transform:uppercase;transition:.2s;}
+.btn-admin-discreto:hover{background:rgba(255,255,255,.18);color:#fff;}
+.container{max-width:760px;margin:0 auto;padding:16px;}
+.card{background:#fff;border-radius:14px;padding:20px;box-shadow:0 2px 12px rgba(0,0,0,.07);margin-bottom:16px;}
+.card-titulo{font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:700;color:var(--texto);margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+.registrador-banner{background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:10px;padding:10px 16px;display:flex;align-items:center;gap:10px;margin-bottom:16px;}
+.rb-label{font-size:11px;color:var(--texto-suave);font-weight:600;text-transform:uppercase;letter-spacing:.5px;}
 .rb-nombre{font-size:14px;font-weight:700;color:var(--verde);}
-
 .campo{margin-bottom:14px;}
 .campo label{display:block;font-size:11px;font-weight:700;color:var(--texto-suave);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;}
-input[type=text],input[type=number],input[type=date],input[type=file],select,textarea{width:100%;padding:13px 14px;border:1.5px solid var(--gris-borde);border-radius:9px;font-family:'Barlow',sans-serif;font-size:15px;color:var(--texto);background:#fff;-webkit-appearance:none;}
+input[type=text],input[type=number],input[type=date],input[type=file],select,textarea{width:100%;padding:11px 14px;border:1.5px solid var(--gris-borde);border-radius:9px;font-family:'Barlow',sans-serif;font-size:14px;color:var(--texto);background:#fff;transition:.2s;}
 input:focus,select:focus,textarea:focus{outline:none;border-color:var(--azul-medio);box-shadow:0 0 0 3px rgba(37,99,235,.1);}
-textarea{min-height:64px;resize:vertical;}
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 12px;}
+textarea{min-height:60px;resize:vertical;}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 14px;}
 @media(max-width:560px){.grid2{grid-template-columns:1fr;}}
-
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:14px 22px;border:none;border-radius:10px;font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:700;letter-spacing:.5px;cursor:pointer;text-transform:uppercase;}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 22px;border:none;border-radius:10px;font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:700;letter-spacing:.5px;cursor:pointer;transition:.2s;text-transform:uppercase;}
 .btn-full{width:100%;}
-.btn-verde{background:var(--verde);color:#fff;}
-.btn-morado{background:var(--morado);color:#fff;}
-.btn-rojo{background:var(--rojo);color:#fff;}
+.btn-verde{background:var(--verde);color:#fff;} .btn-verde:hover{background:#15803d;}
+.btn-azul{background:var(--azul-medio);color:#fff;} .btn-azul:hover{background:var(--azul);}
+.btn-morado{background:var(--morado);color:#fff;} .btn-morado:hover{background:#6d28d9;}
+.btn-gris{background:var(--gris-borde);color:var(--texto);} .btn-gris:hover{background:#cbd5e1;}
+.btn-rojo{background:var(--rojo);color:#fff;} .btn-rojo:hover{background:#b91c1c;}
 .btn-outline{background:transparent;border:2px solid var(--gris-borde);color:var(--texto-suave);}
-.btn-sm{padding:9px 14px;font-size:12px;}
+.btn-outline:hover{border-color:var(--azul-medio);color:var(--azul-medio);}
+.btn-sm{padding:7px 14px;font-size:12px;}
 .btn:disabled{opacity:.55;cursor:not-allowed;}
-
-.resumen-card{position:sticky;top:64px;z-index:80;background:#fff;border-radius:14px;padding:12px 14px;box-shadow:0 4px 14px rgba(0,0,0,.1);margin-bottom:14px;}
+.resumen-card{position:sticky;top:0;z-index:80;background:#fff;border-radius:0 0 14px 14px;padding:12px 16px;box-shadow:0 4px 14px rgba(0,0,0,.1);margin-bottom:14px;}
 .resumen-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
 .resumen-top span:first-child{font-size:12px;font-weight:700;color:var(--texto-suave);}
-.resumen-general-pct{font-family:'Barlow Condensed',sans-serif;font-size:24px;font-weight:900;color:var(--texto);}
-.resumen-barras{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;}
+.resumen-general-pct{font-family:'Barlow Condensed',sans-serif;font-size:26px;font-weight:900;color:var(--texto);}
+.resumen-barras{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;}
 .resumen-barra-item{text-align:center;}
 .resumen-barra-cat{font-size:10px;font-weight:800;}
 .resumen-barra-track{background:#e2e8f0;border-radius:99px;height:7px;overflow:hidden;margin:3px 0;}
 .resumen-barra-fill{height:100%;border-radius:99px;transition:width .3s;width:0%;}
 .resumen-barra-txt{font-size:10px;color:var(--texto-suave);}
-
-.cat-header{background:#fff;border-left:6px solid;border-radius:10px;padding:9px 14px;margin:16px 0 10px;box-shadow:0 2px 8px rgba(0,0,0,.05);}
+.cat-header{background:#fff;border-left:6px solid;border-radius:10px;padding:9px 16px;margin:16px 0 10px;box-shadow:0 2px 8px rgba(0,0,0,.05);}
 .cat-header:first-child{margin-top:0;}
 .cat-badge{font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:800;padding:4px 12px;border-radius:8px;letter-spacing:.5px;text-transform:uppercase;}
-
-.pregunta-card{margin-bottom:12px;}
+.pregunta-card{margin-bottom:14px;}
 .pregunta-num{font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:800;color:var(--texto-suave);margin-bottom:6px;}
+.pregunta-texto{font-size:14px;line-height:1.55;color:var(--texto);margin-bottom:14px;font-weight:500;}
+.respuesta-toggle{display:flex;gap:10px;margin-bottom:14px;}
+.resp-btn{flex:1;padding:13px;border-radius:10px;border:2px solid var(--gris-borde);background:var(--gris-fondo);font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:800;cursor:pointer;transition:.15s;color:var(--texto-suave);text-transform:uppercase;letter-spacing:.5px;}
+.resp-btn:hover{border-color:#94a3b8;}
+.resp-btn.resp-si.activo{background:#dcfce7;border-color:var(--verde);color:#15803d;}
+.resp-btn.resp-no.activo{background:#fee2e2;border-color:var(--rojo);color:#b91c1c;}
 .foto-preview{display:none;max-width:100%;border-radius:10px;margin-top:8px;max-height:240px;object-fit:cover;}
-
-.detalle-pregunta{background:var(--gris-fondo);border-left:5px solid;border-radius:10px;padding:14px 14px;margin-bottom:12px;}
+.foto-actions{display:none;margin-top:8px;}
+.acciones-wrap{margin-top:14px;border-top:1.5px dashed var(--gris-borde);padding-top:12px;}
+.acciones-wrap>label{display:block;font-size:11px;font-weight:700;color:var(--texto-suave);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;}
+.accion-row{display:grid;grid-template-columns:1.4fr 1fr 130px 36px;gap:6px;margin-bottom:8px;align-items:center;}
+.accion-row input{padding:9px 10px;font-size:13px;}
+.acc-remove{width:36px;height:36px;border-radius:8px;border:1.5px solid var(--gris-borde);background:#fee2e2;color:var(--rojo);font-weight:800;cursor:pointer;font-size:15px;}
+@media(max-width:600px){.accion-row{grid-template-columns:1fr;}}
+.tipo-tabs{display:flex;gap:8px;flex-wrap:wrap;}
+.tipo-tab-btn{flex:1;min-width:120px;padding:12px 10px;border-radius:10px;border:2px solid var(--gris-borde);background:var(--gris-fondo);cursor:pointer;font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--texto-suave);transition:.15s;}
+.tipo-tab-btn:hover{border-color:#94a3b8;}
+.tipo-tab-btn.activo{background:#eff6ff;border-color:var(--azul-medio);color:var(--azul);}
+.admin-panel-outer{max-width:1300px;margin:0 auto;padding:0 16px;}
+.admin-panel-body{display:none;background:#fff;border:1.5px solid var(--gris-borde);border-radius:0 0 14px 14px;border-top:none;padding:18px;box-shadow:0 6px 16px rgba(0,0,0,.08);margin-bottom:16px;}
+.admin-panel-body.abierto{display:block;}
+.admin-subtabs{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;}
+.admin-subtab-btn{padding:8px 16px;border-radius:8px;border:2px solid var(--gris-borde);background:none;cursor:pointer;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--texto-suave);transition:.2s;}
+.admin-subtab-btn:hover{border-color:var(--azul-medio);color:var(--azul-medio);}
+.admin-subtab-btn.activo{background:#eff6ff;border-color:var(--azul-medio);color:var(--azul);}
+.admin-seccion{display:none;}
+.admin-seccion.activo{display:block;}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
+@media(max-width:760px){.grid3{grid-template-columns:1fr;}}
+.filtros-bar{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:16px;align-items:end;}
+.multi-select-wrap{position:relative;}
+.multi-select-trigger{display:flex;align-items:center;justify-content:space-between;padding:9px 12px;border-radius:9px;border:1.5px solid var(--gris-borde);background:#fff;cursor:pointer;user-select:none;font-size:13px;gap:8px;}
+.multi-select-trigger .arrow{font-size:10px;color:var(--texto-suave);transition:.2s;}
+.multi-select-trigger.open .arrow{transform:rotate(180deg);}
+.multi-select-dropdown{position:absolute;top:calc(100% + 6px);left:0;right:0;background:#fff;border:1px solid var(--gris-borde);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.12);z-index:200;max-height:0;opacity:0;pointer-events:none;overflow:hidden;transition:max-height .2s,opacity .15s;}
+.multi-select-dropdown.open{max-height:260px;opacity:1;pointer-events:all;}
+.ms-options{overflow-y:auto;max-height:240px;padding:4px;}
+.ms-option{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;cursor:pointer;font-size:13px;}
+.ms-option:hover{background:var(--gris-fondo);}
+.ms-option input{width:15px;height:15px;accent-color:var(--azul-medio);cursor:pointer;}
+.ms-all{border-bottom:1px solid var(--gris-borde);margin-bottom:4px;font-weight:700;}
+.gauge-wrap{text-align:center;}
+.gauge-wrap canvas{max-height:150px;}
+.gauge-pct{font-family:'Barlow Condensed',sans-serif;font-size:26px;font-weight:900;margin-top:4px;}
+.gauges-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-bottom:16px;}
+.table-wrap{overflow-x:auto;border-radius:12px;border:1px solid var(--gris-borde);max-height:480px;overflow-y:auto;}
+table{width:100%;border-collapse:collapse;font-size:12.5px;}
+thead tr{background:var(--azul);color:#fff;position:sticky;top:0;}
+th,td{padding:9px 11px;text-align:left;white-space:nowrap;}
+tbody tr{border-bottom:1px solid var(--gris-borde);}
+tbody tr:hover{background:var(--gris-fondo);}
+.detalle-pregunta{background:var(--gris-fondo);border-left:5px solid;border-radius:10px;padding:14px 16px;margin-bottom:12px;}
+.detalle-pregunta-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:6px;}
+.resp-badge{font-size:12px;font-weight:800;padding:3px 12px;border-radius:20px;}
+.resp-badge.cumple{background:#dcfce7;color:#15803d;}
+.resp-badge.no-cumple{background:#fee2e2;color:#b91c1c;}
 .detalle-pregunta-texto{font-size:13px;line-height:1.55;margin-bottom:8px;}
 .detalle-foto{max-width:220px;border-radius:8px;cursor:pointer;display:block;margin-bottom:8px;}
+.detalle-comentario{font-size:13px;background:#fff;border-radius:8px;padding:8px 12px;margin-bottom:8px;}
+.detalle-acciones{display:flex;flex-direction:column;gap:6px;}
 .detalle-accion-row{background:#fff;border-radius:8px;padding:8px 12px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:12px;}
 .acc-resp-tag,.acc-fecha-tag{background:var(--gris-fondo);padding:2px 9px;border-radius:20px;font-weight:600;}
-
-.btn-volver-ip{
-  position: fixed; bottom: 18px; right: 18px; z-index: 999;
-  display: inline-flex; align-items: center; gap: 8px;
-  padding: 11px 18px; background: #0A2647; color: #EAF0F5;
-  font-family:'Barlow Condensed',sans-serif; font-size: 13px; letter-spacing: .5px;
-  text-decoration: none; border-radius: 999px; border: 1px solid rgba(234,240,245,.15);
-  box-shadow: 0 4px 16px rgba(0,0,0,.35);
-}
-.btn-volver-ip svg{ width: 15px; height: 15px; flex-shrink: 0; }
+.acc-estado{padding:3px 11px;border-radius:20px;font-weight:800;cursor:pointer;font-size:11px;text-transform:uppercase;letter-spacing:.5px;}
+.acc-estado.pendiente{background:#fef3c7;color:#92400e;}
+.acc-estado.completado{background:#dcfce7;color:#15803d;}
+.pregunta-admin-row{border:1.5px solid var(--gris-borde);border-radius:10px;padding:12px;margin-bottom:10px;background:var(--gris-fondo);}
+.pregunta-admin-row textarea{min-height:70px;margin-bottom:8px;background:#fff;}
+.pregunta-admin-controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+.pregunta-admin-controls label{font-size:11px;font-weight:700;color:var(--texto-suave);text-transform:uppercase;letter-spacing:.5px;white-space:nowrap;}
+.pregunta-admin-controls select{width:auto;flex:1;min-width:130px;}
+.pregunta-admin-empty{font-size:13px;color:var(--texto-suave);padding:6px 0 12px;}
 </style>
 </head>
 <body>
@@ -112,11 +160,10 @@ textarea{min-height:64px;resize:vertical;}
 <div id="loading-overlay"><div class="spinner"></div><div id="loading-msg" style="color:var(--texto-suave);font-size:13px;">Cargando...</div></div>
 <div id="notif"></div>
 
-<!-- LOGIN -->
 <div class="modal-overlay abierto" id="modalLogin">
   <div class="modal-box">
-    <div class="modal-icono">🔍</div>
-    <div class="modal-titulo">RECORRIDO EXPERTO 5S</div>
+    <div class="modal-icono">🧹</div>
+    <div class="modal-titulo">AUDITORÍA 5S</div>
     <div class="modal-sub">Ingresa tu número de empleado para comenzar</div>
     <div class="campo">
       <label>Número de Empleado</label>
@@ -124,87 +171,247 @@ textarea{min-height:64px;resize:vertical;}
       <div class="nombre-hint" id="login-hint"></div>
     </div>
     <div id="login-estado" style="font-size:13px;font-weight:600;min-height:18px;margin-bottom:14px;"></div>
-    <button class="btn btn-morado btn-full" onclick="confirmarLogin()">✅ Ingresar</button>
-  </div>
-</div>
-
-<!-- APP -->
-<div id="appPrincipal" style="display:none">
-  <div class="app-header">
-    <div class="header-left">
-      <div class="header-logo">5S</div>
-      <div>
-        <div class="header-title">RECORRIDO EXPERTO</div>
-        <div class="header-sub">Auditor experimentado · sin checklist</div>
-      </div>
-    </div>
-    <button class="btn-admin-discreto" onclick="logout()">Salir</button>
+    <button class="btn btn-azul btn-full" onclick="confirmarLogin()">✅ Ingresar</button>
   </div>
 
-  <div class="container">
-    <div class="registrador-banner"><span style="font-size:20px;">👤</span><div><div class="rb-label">Recorrido registrado por</div><div class="rb-nombre" id="banner-nombre"></div></div></div>
+  
+  <style>
+  .btn-volver-ip{
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 999;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 20px;
+    background: #0A2647;
+    color: #EAF0F5;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 13px;
+    letter-spacing: 0.5px;
+    text-decoration: none;
+    border-radius: 999px;
+    border: 1px solid rgba(234,240,245,0.15);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.35);
+    transition: transform 0.25s ease, box-shadow 0.25s ease, background 0.25s ease;
+  }
+  .btn-volver-ip:hover{
+    background: #2C74B3;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(95,168,211,0.45);
+  }
+  .btn-volver-ip svg{ width: 16px; height: 16px; flex-shrink: 0; }
+</style>
 
-    <div class="card">
-      <div class="card-titulo">📍 Datos del Recorrido</div>
-      <div class="grid2">
-        <div class="campo">
-          <label>Área</label>
-          <select id="din-area">
-            <option value="">Selecciona área</option>
-            <option>A330</option><option>A350</option><option>ALMACENES</option><option>BOEING</option>
-            <option>COMAC</option><option>ENVIOS</option><option>FTF A220</option><option>LEGACY</option>
-            <option>METAL WORKS</option><option>MONUMENTOS</option><option>PROCESOS PRIMARIOS</option><option>SHIPLOOSE</option>
-          </select>
-        </div>
-        <div class="campo"><label>Auditor</label><input type="text" id="din-auditor" placeholder="Nombre del auditor"></div>
-      </div>
-      <div class="campo" style="margin-bottom:0;"><label>Proceso / Zona (opcional)</label><input type="text" id="din-proceso" placeholder="Ej: Línea de ensamble, almacén de insertos..."></div>
-    </div>
-
-    <div class="resumen-card" id="dinResumenCard">
-      <div class="resumen-top">
-        <span id="din-contador">0 hallazgos registrados</span>
-        <span class="resumen-general-pct" id="din-total-badge">0</span>
-      </div>
-      <div class="resumen-barras" id="dinResumenBarras"></div>
-    </div>
-
-    <p style="font-size:12.5px;color:var(--texto-suave);margin:-4px 0 10px;line-height:1.5;">
-      Recorre el área y registra un hallazgo dentro de la S que corresponda: toma la foto, describe lo observado, define la acción correctiva, el responsable y la fecha límite.
-    </p>
-
-    <div id="dinCategorias"></div>
-
-    <div class="card" style="text-align:center;">
-      <button class="btn btn-morado btn-full" id="btnFinalizarDinamico" onclick="finalizarRecorridoDinamico()">🏁 Finalizar Recorrido y Generar Reporte</button>
-    </div>
-  </div>
-</div>
-
-<!-- REPORTE -->
-<div class="modal-overlay" id="modalReporteDinamico">
-  <div class="modal-box-large" style="position:relative;">
-    <button class="modal-close-x" onclick="document.getElementById('modalReporteDinamico').classList.remove('abierto')">✕</button>
-    <div class="modal-titulo" id="reporteDin-titulo" style="text-align:left;font-size:19px;">🔍 Reporte de Recorrido Experto</div>
-    <div class="modal-sub" id="reporteDin-meta" style="text-align:left;margin-bottom:14px;">—</div>
-    <div id="reporteDin-body"></div>
-    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:14px;">
-      <button class="btn btn-verde" onclick="exportarReporteDinamicoExcel()">📥 Exportar Reporte (Excel)</button>
-      <button class="btn btn-outline" onclick="document.getElementById('modalReporteDinamico').classList.remove('abierto')">Cerrar</button>
-    </div>
-  </div>
-</div>
-
-<!-- Enlace de regreso al panel principal: cambia el href por la URL real de tu app/panel -->
 <a class="btn-volver-ip" href="https://innovacionparticipativa7-netizen.github.io/CI-page/">
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/>
+    <path d="M19 12H5"/>
+    <path d="M12 19l-7-7 7-7"/>
   </svg>
   Volver al panel
 </a>
 
+  
+</div>
+
+
+  
+
+  
+<div class="modal-overlay" id="modalDetalle">
+  <div class="modal-box-large" style="position:relative;">
+    <button class="modal-close-x" onclick="document.getElementById('modalDetalle').classList.remove('abierto')">✕</button>
+    <div class="modal-titulo" id="detalle-titulo" style="text-align:left;font-size:19px;">—</div>
+    <div class="modal-sub" id="detalle-meta" style="text-align:left;margin-bottom:14px;">—</div>
+    <div id="detalle-body"></div>
+  </div>
+</div>
+
+<div id="appPrincipal" style="display:none">
+  <div class="app-header">
+    <div class="header-left">
+      <div class="header-logo">5S</div>
+      <div><div class="header-title">AUDITORÍA 5S</div><div class="header-sub">Sortear · Organizar · Limpiar · Estandarizar · Sostener</div></div>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn-admin-discreto" onclick="toggleAdminPanel()">⚙ Admin</button>
+      <button class="btn-admin-discreto" onclick="logout()">Salir</button>
+    </div>
+  </div>
+
+  <div class="admin-panel-outer">
+    <div class="admin-panel-body" id="adminPanelBody">
+      <div class="admin-subtabs">
+        <button class="admin-subtab-btn activo" id="sub-dashboard" onclick="cambiarSubtabAdmin('dashboard')">📊 Dashboard</button>
+        <button class="admin-subtab-btn" id="sub-historial" onclick="cambiarSubtabAdmin('historial')">📅 Historial</button>
+        <button class="admin-subtab-btn" id="sub-acciones" onclick="cambiarSubtabAdmin('acciones')">✅ Plan de Acciones</button>
+        <button class="admin-subtab-btn" id="sub-empleados" onclick="cambiarSubtabAdmin('empleados')">👥 Empleados</button>
+        <button class="admin-subtab-btn" id="sub-preguntas" onclick="cambiarSubtabAdmin('preguntas')">📝 Preguntas</button>
+      </div>
+
+      <div class="admin-seccion activo" id="sec-dashboard">
+        <div class="filtros-bar">
+          <div>
+            <label class="campo" style="margin-bottom:6px;display:block;font-size:11px;font-weight:700;color:var(--texto-suave);text-transform:uppercase;letter-spacing:.5px;">Área</label>
+            <div class="multi-select-wrap" id="ms-area5s">
+              <div class="multi-select-trigger" onclick="toggleMS('ms-area5s')">
+                <span id="ms-area5s-label">Todas las áreas</span><span class="arrow">▼</span>
+              </div>
+              <div class="multi-select-dropdown" id="ms-area5s-drop">
+                <div class="ms-options" id="ms-area5s-opts">
+                  <div class="ms-option ms-all"><input type="checkbox" id="ms-area5s-all" onchange="toggleAllMS('ms-area5s')"><label for="ms-area5s-all">Todas</label></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="campo" style="margin-bottom:0;"><label>Tipo de evaluación</label>
+            <select id="dashFiltroTipo" onchange="actualizarDashboard();renderHistorial()">
+              <option value="">Todos</option>
+            </select>
+          </div>
+          <div class="campo" style="margin-bottom:0;"><label>Desde</label><input type="date" id="dashFechaInicio" onchange="actualizarDashboard();renderHistorial()"></div>
+          <div class="campo" style="margin-bottom:0;"><label>Hasta</label><input type="date" id="dashFechaFin" onchange="actualizarDashboard();renderHistorial()"></div>
+          <button class="btn btn-outline btn-sm" onclick="limpiarFiltrosDash()">✕ Limpiar filtros</button>
+        </div>
+        <div class="card gauge-wrap">
+          <div class="card-titulo" style="justify-content:center;">Score General <span id="dash-count" style="font-size:12px;color:var(--texto-suave);font-weight:400;margin-left:6px;"></span></div>
+          <canvas id="gaugeGeneral5s"></canvas>
+          <div id="pct-general5s" class="gauge-pct">–</div>
+        </div>
+        <div class="gauges-grid">
+          <div class="card gauge-wrap"><div class="card-titulo" style="justify-content:center;font-size:14px;">1S</div><canvas id="gauge-1S"></canvas><div id="pct-1S" class="gauge-pct" style="font-size:18px;">–</div></div>
+          <div class="card gauge-wrap"><div class="card-titulo" style="justify-content:center;font-size:14px;">2S</div><canvas id="gauge-2S"></canvas><div id="pct-2S" class="gauge-pct" style="font-size:18px;">–</div></div>
+          <div class="card gauge-wrap"><div class="card-titulo" style="justify-content:center;font-size:14px;">3S</div><canvas id="gauge-3S"></canvas><div id="pct-3S" class="gauge-pct" style="font-size:18px;">–</div></div>
+          <div class="card gauge-wrap"><div class="card-titulo" style="justify-content:center;font-size:14px;">4S</div><canvas id="gauge-4S"></canvas><div id="pct-4S" class="gauge-pct" style="font-size:18px;">–</div></div>
+          <div class="card gauge-wrap"><div class="card-titulo" style="justify-content:center;font-size:14px;">5S</div><canvas id="gauge-5S"></canvas><div id="pct-5S" class="gauge-pct" style="font-size:18px;">–</div></div>
+        </div>
+        <div class="card"><div class="card-titulo">📊 Score General Promedio por Área</div><canvas id="graficaArea5s" height="100"></canvas></div>
+        <div class="card"><div class="card-titulo">📈 Tendencia Semanal</div><canvas id="graficaTendencia5s" height="100"></canvas></div>
+        <div class="card" style="display:flex;gap:10px;flex-wrap:wrap;">
+          <button class="btn btn-verde" onclick="exportarAuditoriasExcel()">📥 Exportar Auditorías</button>
+          <button class="btn btn-azul" onclick="exportarDetalleExcel()">📥 Exportar Detalle Completo</button>
+        </div>
+      </div>
+
+      <div class="admin-seccion" id="sec-historial">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Fecha</th><th>Tipo</th><th>Área</th><th>Auditor</th><th>Proceso</th><th>1S</th><th>2S</th><th>3S</th><th>4S</th><th>5S</th><th>General</th><th></th></tr></thead>
+            <tbody id="tablaHistorial5s"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="admin-seccion" id="sec-acciones">
+        <div class="filtros-bar">
+          <div class="campo" style="margin-bottom:0;"><label>Área</label>
+            <select id="acc-filtroArea" onchange="renderPlanAcciones()"><option value="">Todas</option></select>
+          </div>
+          <div class="campo" style="margin-bottom:0;"><label>Estado</label>
+            <select id="acc-filtroEstado" onchange="renderPlanAcciones()"><option value="">Todos</option><option value="pendiente">Pendiente</option><option value="completado">Completado</option></select>
+          </div>
+          <div class="campo" style="margin-bottom:0;"><label>Responsable</label>
+            <input type="text" id="acc-filtroResp" placeholder="Buscar responsable..." oninput="renderPlanAcciones()">
+          </div>
+          <button class="btn btn-verde btn-sm" onclick="exportarAccionesExcel()">📥 Exportar Plan de Acciones</button>
+        </div>
+        <p style="font-size:12px;color:var(--texto-suave);margin-bottom:10px;"><span id="acc-count">0</span> acciones · toca el estado para marcar como completado</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Fecha</th><th>Área</th><th>Categoría</th><th>Descripción</th><th>Responsable</th><th>Fecha límite</th><th>Estado</th><th>Auditor</th></tr></thead>
+            <tbody id="tablaAcciones5s"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="admin-seccion" id="sec-empleados">
+        <div class="grid2">
+          <div>
+            <div class="campo"><label>Subir Empleados (Excel: columnas numero, nombre)</label><input type="file" id="emp-excel" accept=".xlsx,.xls"></div>
+            <button class="btn btn-gris btn-full" onclick="subirEmpleadosExcel()">Subir Empleados</button>
+            <button class="btn btn-outline btn-full" style="margin-top:8px;" onclick="descargarPlantillaEmpleados()">Descargar Plantilla</button>
+            <div id="emp-estado" style="margin-top:8px;font-size:13px;"></div>
+          </div>
+          <div>
+            <div class="card-titulo" style="font-size:14px;">ℹ️ Información</div>
+            <p style="font-size:13px;color:var(--texto-suave);line-height:1.6;">Los empleados se usan para identificar a la persona que realiza la auditoría al iniciar sesión. Sube un Excel con las columnas <b>numero</b> y <b>nombre</b> para registrarlos.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="admin-seccion" id="sec-preguntas">
+        <p style="font-size:13px;color:var(--texto-suave);margin-bottom:14px;line-height:1.6;">
+          Edita el texto de cada pregunta, agrega nuevas o elimínalas, y elige qué área (1S–5S) le corresponde. En cada pregunta selecciona qué respuesta (<b>Sí</b> o <b>No</b>) es la que <b>cumple</b> y suma puntos al porcentaje. Cada <b>tipo de evaluación</b> (Producción, Oficinas, Exteriores) tiene su propio set de preguntas — usa las pestañas para cambiar entre ellas. Los cambios aplican a las próximas auditorías.
+        </p>
+        <div class="admin-subtabs" id="preguntasTipoTabs"></div>
+        <div id="preguntasAdminCats"></div>
+        <div class="card" style="display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;">
+          <button class="btn btn-verde" onclick="guardarPreguntas()">💾 Guardar Cambios</button>
+          <button class="btn btn-outline" onclick="renderPreguntasAdmin()">↺ Descartar cambios</button>
+          <button class="btn btn-rojo" onclick="restaurarPreguntasDefault()">⚠ Restaurar preguntas originales</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="registrador-banner"><span style="font-size:20px;">👤</span><div><div class="rb-label">Auditoría registrada por</div><div class="rb-nombre" id="banner-nombre"></div></div></div>
+
+    <div id="wrapChecklist">
+      <div class="card" style="padding:12px;">
+        <div class="tipo-tabs" id="tipoTabs"></div>
+      </div>
+
+      <div class="resumen-card" id="resumenCard">
+        <div class="resumen-top">
+          <span id="resumen-contador">0/10 preguntas respondidas</span>
+          <span class="resumen-general-pct" id="resumen-general">0%</span>
+        </div>
+        <div class="resumen-barras" id="resumenBarras"></div>
+      </div>
+      <div class="card">
+        <div class="card-titulo">📍 Datos de la Auditoría</div>
+        <div class="grid2">
+          <div class="campo">
+            <label>Área</label>
+            <select id="aud-area">
+              <option value="">Selecciona área</option>
+              <option>A330</option><option>A350</option><option>ALMACENES</option><option>BOEING</option>
+              <option>COMAC</option><option>ENVIOS</option><option>FTF A220</option><option>LEGACY</option>
+              <option>METAL WORKS</option><option>MONUMENTOS</option><option>PROCESOS PRIMARIOS</option><option>SHIPLOOSE</option>
+            </select>
+          </div>
+          <div class="campo"><label>Auditor</label><input type="text" id="aud-auditor" placeholder="Nombre del auditor"></div>
+        </div>
+        <div class="campo"><label>Proceso Auditado</label>
+          <select id="aud-proceso">
+            <option value="">Selecciona proceso</option>
+            <option>Laminado</option>
+            <option>Prensas</option>
+            <option>CNC</option>
+            <option>Maquinado</option>
+            <option>Insertos</option>
+            <option>Bondeo</option>
+            <option>Lijado y Pintura</option>
+            <option>Decorado</option>
+            <option>Ensamble Final</option>
+            <option>Test</option>
+            <option>Inspección Final</option>
+            <option>Envíos</option>
+          </select>
+        </div>
+      </div>
+      <div id="preguntasContainer"></div>
+      <div class="card" style="text-align:center;">
+        <button class="btn btn-verde btn-full" id="btnGuardarAuditoria" onclick="guardarAuditoria()">💾 Guardar Auditoría</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
 <script>
-/* ====== MISMA CONFIGURACIÓN QUE LA APP PRINCIPAL ====== */
 firebase.initializeApp({
   apiKey: "AIzaSyCSeiy-x5Cn0GsYjCDeStNpUZCYg0-kcXs",
   authDomain: "ss-auditoria.firebaseapp.com",
@@ -215,9 +422,9 @@ firebase.initializeApp({
 });
 const db = firebase.firestore();
 
-const CLOUDINARY_CLOUD_NAME    = "dc9wxwria";
+const CLOUDINARY_CLOUD_NAME   = "dc9wxwria";
 const CLOUDINARY_UPLOAD_PRESET = "auditoria_5s";
-
+const ADMIN_PASSWORD = "5S2026";
 const AREAS_5S = ["A330","A350","ALMACENES","BOEING","COMAC","ENVIOS","FTF A220","LEGACY","METAL WORKS","MONUMENTOS","PROCESOS PRIMARIOS","SHIPLOOSE"];
 const CAT_INFO = {
   "1S": { nombre:"1S · Sortear",         color:"#dc2626" },
@@ -227,9 +434,60 @@ const CAT_INFO = {
   "5S": { nombre:"5S · Sostenimiento",   color:"#16a34a" }
 };
 
+const TIPOS_INFO = {
+  produccion: { nombre:" N1-Producción", icon:"🏭" },
+  oficinas:   { nombre:"N2-Oficinas",   icon:"🏢" },
+  exteriores: { nombre:"N3 y N4-Exteriores", icon:"🌳" }
+};
+const TIPOS_ORDEN = ["produccion","oficinas","exteriores"];
+
+const PREGUNTAS_5S_DEFAULT_POR_TIPO = {
+  produccion: [
+    { id:"p1",  cat:"1S", invertido:true,  texto:"¿Se tienen materiales, trapos o químicos innecesarios que deban retirarse? ¿Hay equipos, muebles, repuestos, empaques en desuso en el área, estación de trabajo y mesas no necesarios que deban retirarse? ¿Existen elementos como tuberías en desuso, materiales colgantes sobre el techo que deben retirarse?" },
+    { id:"p2",  cat:"1S", invertido:true,  texto:"¿Se tienen documentos NO necesarios en estaciones de trabajo, computadoras y escritorios? ¿Se tienen racks en mal estado, cables expuestos o condiciones que pongan en riesgo tu seguridad al realizar el trabajo?" },
+    { id:"p3",  cat:"2S", invertido:false, texto:"¿Todo tiene un lugar asignado y etiquetado incluido marcado de suelo de acuerdo a Código estándar de colores (herramientas, materiales, productos, químicos)? ¿El área cuenta con contenedores FOD individuales?" },
+    { id:"p4",  cat:"2S", invertido:false, texto:"¿Los documentos utilizados para la operación están identificados y ubicados correctamente? ¿La información en los tableros de comunicación del área está actualizada?" },
+    { id:"p5",  cat:"3S", invertido:false, texto:"¿El área está limpia y ordenada por todo el personal? ¿Las etiquetas, rótulos e identificaciones están protegidos enmicados en buen estado y se pueden leer? ¿Las delimitaciones de suelo (tapes) están en buen estado que no estén dañados?" },
+    { id:"p6",  cat:"3S", invertido:false, texto:"¿Las piezas están en un entorno libre de FOD? ¿Los contenedores FOD / Residuos se vacían al final del turno?" },
+    { id:"p7",  cat:"4S", invertido:false, texto:"¿Se muestran los estándares visuales 5S y están activos en el área? ¿El área está identificada correctamente con su nombre y estándar del sitio? ¿Los documentos, métricas y gráficos usan el estándar correcto de la empresa?" },
+    { id:"p8",  cat:"4S", invertido:false, texto:"¿Los materiales, piezas y químicos están identificados y almacenados según estándar? ¿No hay productos químicos vencidos, verifique al menos 5 químicos que se encuentren en la zona?" },
+    { id:"p9",  cat:"5S", invertido:false, texto:"¿El patrocinador, líderes de área y equipo participan activamente en 5S? ¿Se realizan evaluaciones semanales / mensuales y se siguen las reglas de 5S?" },
+    { id:"p10", cat:"5S", invertido:false, texto:"¿El plan de mejora 5S actual está publicado y no tiene fechas vencidas?" }
+  ],
+  oficinas: [
+    { id:"o1",  cat:"1S", invertido:true,  texto:"¿Hay documentos, papelería, equipos o cajas en desuso sobre escritorios, archiveros o áreas comunes que deban retirarse?" },
+    { id:"o2",  cat:"1S", invertido:true,  texto:"¿Existen cables sueltos, enchufes sobrecargados o condiciones que representen un riesgo de seguridad en el área de oficinas?" },
+    { id:"o3",  cat:"2S", invertido:false, texto:"¿Los archivos físicos y digitales están organizados, etiquetados y ubicados en un lugar definido y de fácil acceso?" },
+    { id:"o4",  cat:"2S", invertido:false, texto:"¿Los tableros de comunicación e información en las áreas de trabajo están actualizados y ordenados?" },
+    { id:"o5",  cat:"3S", invertido:false, texto:"¿El área de oficinas (escritorios, salas de juntas, cocineta) se encuentra limpia y ordenada?" },
+    { id:"o6",  cat:"3S", invertido:false, texto:"¿Se realiza limpieza periódica de equipos de cómputo, teclados, pantallas y mobiliario?" },
+    { id:"o7",  cat:"4S", invertido:false, texto:"¿Se muestran los estándares visuales 5S en el área de oficinas y están vigentes?" },
+    { id:"o8",  cat:"4S", invertido:false, texto:"¿Existen procedimientos documentados y estandarizados para el manejo de archivo y documentación?" },
+    { id:"o9",  cat:"5S", invertido:false, texto:"¿El personal de oficinas participa activamente en las actividades y evaluaciones 5S?" },
+    { id:"o10", cat:"5S", invertido:false, texto:"¿El plan de mejora 5S del área de oficinas está publicado y sin fechas vencidas?" }
+  ],
+  exteriores: [
+    { id:"e1",  cat:"1S", invertido:true,  texto:"¿Existen materiales, chatarra, equipos en desuso o basura acumulada en patios, andenes o áreas exteriores que deban retirarse?" },
+    { id:"e2",  cat:"1S", invertido:true,  texto:"¿Hay condiciones inseguras como obstrucciones en pasillos vehiculares/peatonales, fugas o iluminación deficiente en el exterior?" },
+    { id:"e3",  cat:"2S", invertido:false, texto:"¿Las áreas de estacionamiento, andenes y zonas de tránsito están señalizadas y delimitadas según el estándar de colores?" },
+    { id:"e4",  cat:"2S", invertido:false, texto:"¿Los contenedores de residuos, reciclaje y materiales exteriores están correctamente identificados y ubicados?" },
+    { id:"e5",  cat:"3S", invertido:false, texto:"¿Las áreas exteriores (jardines, andenes, patios de maniobra) están limpias y libres de basura o derrames?" },
+    { id:"e6",  cat:"3S", invertido:false, texto:"¿Se realiza limpieza periódica de drenajes, coladeras y áreas de descarga en el exterior?" },
+    { id:"e7",  cat:"4S", invertido:false, texto:"¿La señalización exterior (rutas de evacuación, límites de velocidad, zonas restringidas) está visible y en buen estado?" },
+    { id:"e8",  cat:"4S", invertido:false, texto:"¿Los materiales o químicos almacenados en el exterior cuentan con protección adecuada y etiquetado correcto?" },
+    { id:"e9",  cat:"5S", invertido:false, texto:"¿Se realizan recorridos y evaluaciones periódicas de 5S en las áreas exteriores?" },
+    { id:"e10", cat:"5S", invertido:false, texto:"¿El plan de mejora 5S de áreas exteriores está publicado y no tiene fechas vencidas?" }
+  ]
+};
+
+let PREGUNTAS_TODAS = [];
+let PREGUNTAS_5S = [];
+let tipoActual = "produccion";
 let usuarioActual = { numero:"", nombre:"" };
-let hallazgoCounter = 0;
-let ultimoRecorridoDinamico = null;
+let respuestasActuales = {};
+let accionCounter = 0;
+const STATE = { auditorias:[], acciones:[], adminCargado:false, adminDesbloqueado:false };
+let gaugesAdmin = {}, chartArea = null, chartTendencia = null;
 
 function notif(msg, error=false){
   const el = document.getElementById("notif");
@@ -247,9 +505,59 @@ function getSemanaActual(d=new Date()){
 function escapeHTML(str){
   return String(str==null?"":str).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
 }
-function fechaDe(obj){ return obj?.toDate ? obj.toDate() : new Date(obj); }
+function gaugeColor(v){ return v>=75 ? "#16a34a" : v>=50 ? "#f59e0b" : "#dc2626"; }
 
-/* ====== LOGIN (mismos empleados que la app principal) ====== */
+function renderTipoTabs(){
+  const cont = document.getElementById("tipoTabs");
+  cont.innerHTML = TIPOS_ORDEN.map(t=>`<button type="button" class="tipo-tab-btn ${t===tipoActual?'activo':''}" onclick="cambiarTipo('${t}')">${TIPOS_INFO[t].icon} ${TIPOS_INFO[t].nombre}</button>`).join("");
+}
+
+function cambiarTipo(tipo){
+  if (tipo === tipoActual) return;
+  tipoActual = tipo;
+  respuestasActuales = {};
+  renderTipoTabs();
+  PREGUNTAS_5S = PREGUNTAS_TODAS.filter(p=>p.tipo===tipoActual);
+  renderPreguntas();
+  actualizarResumen();
+  window.scrollTo({top:0, behavior:"smooth"});
+}
+
+async function cargarPreguntas(){
+  try {
+    const snap = await db.collection("preguntas5s").orderBy("orden").get();
+    if (snap.empty){
+      const batch = db.batch();
+      let orden = 0;
+      TIPOS_ORDEN.forEach(tipo=>{
+        PREGUNTAS_5S_DEFAULT_POR_TIPO[tipo].forEach(p=>{
+          const ref = db.collection("preguntas5s").doc(tipo + "_" + p.id);
+          batch.set(ref, { tipo, cat:p.cat, invertido:!!p.invertido, texto:p.texto, orden:orden++ });
+        });
+      });
+      await batch.commit();
+      PREGUNTAS_TODAS = [];
+      TIPOS_ORDEN.forEach(tipo=>{
+        PREGUNTAS_5S_DEFAULT_POR_TIPO[tipo].forEach(p=>PREGUNTAS_TODAS.push({...p, tipo}));
+      });
+    } else {
+      PREGUNTAS_TODAS = snap.docs.map(d=>{
+        const data = d.data();
+        return { id:d.id, tipo:data.tipo||"produccion", cat:data.cat, invertido:!!data.invertido, texto:data.texto };
+      });
+    }
+    PREGUNTAS_5S = PREGUNTAS_TODAS.filter(p=>p.tipo===tipoActual);
+  } catch(e){
+    console.error(e);
+    PREGUNTAS_TODAS = [];
+    TIPOS_ORDEN.forEach(tipo=>{
+      PREGUNTAS_5S_DEFAULT_POR_TIPO[tipo].forEach(p=>PREGUNTAS_TODAS.push({...p, tipo}));
+    });
+    PREGUNTAS_5S = PREGUNTAS_TODAS.filter(p=>p.tipo===tipoActual);
+    notif("No se pudieron cargar las preguntas desde la base de datos, se usan valores por defecto", true);
+  }
+}
+
 async function buscarEmpleadoLogin(){
   const numero = document.getElementById("login-numero").value;
   const hint = document.getElementById("login-hint");
@@ -274,10 +582,11 @@ async function confirmarLogin(){
     document.getElementById("modalLogin").classList.remove("abierto");
     document.getElementById("appPrincipal").style.display = "block";
     document.getElementById("banner-nombre").innerText = usuarioActual.nombre + " · #" + usuarioActual.numero;
-    document.getElementById("din-auditor").value = usuarioActual.nombre;
-    initDinamicoUI();
-    initDinResumenBarras();
-    actualizarResumenDinamico();
+    document.getElementById("aud-auditor").value = usuarioActual.nombre;
+    setLoading(true, "Cargando preguntas de la auditoría...");
+    await cargarPreguntas();
+    setLoading(false);
+    inicializarFormulario();
   } catch(e){ estado.style.color="var(--rojo)"; estado.innerText="Error de conexión con la base de datos"; }
 }
 
@@ -288,108 +597,136 @@ function logout(){
   document.getElementById("login-hint").innerText = "";
   document.getElementById("login-estado").innerText = "";
   document.getElementById("modalLogin").classList.add("abierto");
-  resetDinamico();
 }
 
-/* ====== RECORRIDO EXPERTO ====== */
-function initDinamicoUI(){
-  const cont = document.getElementById("dinCategorias");
-  cont.innerHTML = Object.keys(CAT_INFO).map(cat=>{
-    const info = CAT_INFO[cat];
-    return `
-    <div class="cat-header" style="border-left-color:${info.color}">
-      <span class="cat-badge" style="background:${info.color}22;color:${info.color}">${info.nombre}</span>
-    </div>
-    <div class="card" style="padding-top:14px;">
-      <div id="din-lista-${cat}"></div>
-      <button type="button" class="btn btn-outline btn-full" onclick="agregarHallazgoDinamico('${cat}')">+ Agregar hallazgo en ${cat}</button>
-    </div>`;
-  }).join("");
+function inicializarFormulario(){
+  renderTipoTabs();
+  initResumenBarras();
+  renderPreguntas();
+  actualizarResumen();
 }
 
-function initDinResumenBarras(){
-  const cont = document.getElementById("dinResumenBarras");
-  cont.innerHTML = Object.keys(CAT_INFO).map(c=>`
+function initResumenBarras(){
+  const cont = document.getElementById("resumenBarras");
+  cont.innerHTML = Object.keys(CAT_INFO).map(c => `
     <div class="resumen-barra-item">
       <div class="resumen-barra-cat" style="color:${CAT_INFO[c].color}">${c}</div>
-      <div class="resumen-barra-track"><div class="resumen-barra-fill" id="dinbarra-${c}" style="background:${CAT_INFO[c].color}"></div></div>
-      <div class="resumen-barra-txt" id="dinbarratxt-${c}">0</div>
+      <div class="resumen-barra-track"><div class="resumen-barra-fill" id="barra-${c}" style="background:${CAT_INFO[c].color}"></div></div>
+      <div class="resumen-barra-txt" id="barratxt-${c}">0%</div>
     </div>`).join("");
 }
 
-function agregarHallazgoDinamico(cat){
-  const hid = "hz" + (++hallazgoCounter);
-  const cont = document.getElementById("din-lista-"+cat);
-  const n = cont.children.length + 1;
-  const div = document.createElement("div");
-  div.className = "card pregunta-card";
-  div.id = hid;
-  div.style.background = "#f8fafc";
-  div.innerHTML = `
-    <div class="pregunta-num">Hallazgo ${n} · ${cat}</div>
-    <div class="campo">
-      <label>📷 Foto de evidencia</label>
-      <input type="file" accept="image/*" capture="environment" id="${hid}-foto" onchange="previewFotoHallazgo('${hid}')">
-      <img id="${hid}-preview" class="foto-preview">
-    </div>
-    <div class="campo">
-      <label>💬 Comentario / Hallazgo</label>
-      <textarea id="${hid}-coment" placeholder="¿Qué se observó en el área?"></textarea>
-    </div>
-    <div class="campo">
-      <label>🛠 Acción correctiva</label>
-      <input type="text" id="${hid}-accion" placeholder="Acción a realizar">
-    </div>
-    <div class="grid2">
-      <div class="campo"><label>Responsable</label><input type="text" id="${hid}-resp" placeholder="Responsable"></div>
-      <div class="campo" style="margin-bottom:0;"><label>Fecha límite</label><input type="date" id="${hid}-fecha"></div>
-    </div>
-    <button type="button" class="btn btn-rojo btn-sm btn-full" style="margin-top:10px;" onclick="eliminarHallazgoDinamico('${hid}')">🗑 Eliminar hallazgo</button>`;
-  cont.appendChild(div);
-  actualizarResumenDinamico();
-  div.scrollIntoView({behavior:"smooth", block:"center"});
-}
-
-function eliminarHallazgoDinamico(hid){
-  const el = document.getElementById(hid);
-  if (el) el.remove();
-  renumerarHallazgos();
-  actualizarResumenDinamico();
-}
-
-function renumerarHallazgos(){
-  Object.keys(CAT_INFO).forEach(cat=>{
-    const cont = document.getElementById("din-lista-"+cat);
-    if (!cont) return;
-    [...cont.children].forEach((div,i)=>{
-      const num = div.querySelector(".pregunta-num");
-      if (num) num.textContent = `Hallazgo ${i+1} · ${cat}`;
-    });
+function renderPreguntas(){
+  const cont = document.getElementById("preguntasContainer");
+  cont.innerHTML = "";
+  let catActual = "";
+  PREGUNTAS_5S.forEach((p, idx) => {
+    if (p.cat !== catActual){
+      catActual = p.cat;
+      const info = CAT_INFO[p.cat];
+      cont.innerHTML += `<div class="cat-header" style="border-left-color:${info.color}"><span class="cat-badge" style="background:${info.color}22;color:${info.color}">${info.nombre}</span></div>`;
+    }
+    cont.innerHTML += `
+    <div class="card pregunta-card" data-id="${p.id}">
+      <div class="pregunta-num">Pregunta ${idx+1} de ${PREGUNTAS_5S.length}</div>
+      <div class="pregunta-texto">${p.texto}</div>
+      <div class="respuesta-toggle">
+        <button type="button" class="resp-btn resp-si" onclick="setRespuesta('${p.id}','si',this)">✅ Sí</button>
+        <button type="button" class="resp-btn resp-no" onclick="setRespuesta('${p.id}','no',this)">❌ No</button>
+      </div>
+      <div class="campo">
+        <label>📷 Foto de evidencia</label>
+        <input type="file" accept="image/*" capture="environment" id="foto-${p.id}" onchange="previewFoto('${p.id}')">
+        <img id="preview-${p.id}" class="foto-preview">
+        <div class="foto-actions" id="fotoActions-${p.id}">
+          <button type="button" class="btn btn-rojo btn-sm" onclick="eliminarFoto('${p.id}')">🗑 Eliminar foto</button>
+        </div>
+      </div>
+      <div class="campo" style="margin-bottom:0;">
+        <label>💬 Comentario</label>
+        <textarea id="coment-${p.id}" placeholder="Observaciones..."></textarea>
+      </div>
+      <div class="acciones-wrap">
+        <label>🛠 Acciones / Hallazgos</label>
+        <div class="acciones-lista" id="acciones-lista-${p.id}"></div>
+        <button type="button" class="btn btn-outline btn-sm" onclick="agregarAccion('${p.id}')">+ Agregar acción</button>
+      </div>
+    </div>`;
   });
 }
 
-function previewFotoHallazgo(hid){
-  const file = document.getElementById(hid+"-foto").files[0];
-  const img = document.getElementById(hid+"-preview");
-  if (!file){ img.style.display = "none"; img.src=""; return; }
+function setRespuesta(id, val, btn){
+  respuestasActuales[id] = val;
+  const card = btn.closest(".pregunta-card");
+  card.querySelectorAll(".resp-btn").forEach(b => b.classList.remove("activo"));
+  btn.classList.add("activo");
+  actualizarResumen();
+}
+
+function previewFoto(id){
+  const file = document.getElementById("foto-"+id).files[0];
+  const img = document.getElementById("preview-"+id);
+  const acciones = document.getElementById("fotoActions-"+id);
+  if (!file){ img.style.display = "none"; img.src=""; acciones.style.display="none"; return; }
   const reader = new FileReader();
-  reader.onload = e => { img.src = e.target.result; img.style.display = "block"; };
+  reader.onload = e => { img.src = e.target.result; img.style.display = "block"; acciones.style.display="block"; };
   reader.readAsDataURL(file);
 }
 
-function actualizarResumenDinamico(){
-  let total = 0;
-  Object.keys(CAT_INFO).forEach(c=>{
-    const cont = document.getElementById("din-lista-"+c);
-    const n = cont ? cont.children.length : 0;
-    total += n;
-    const barra = document.getElementById("dinbarra-"+c);
-    const txt = document.getElementById("dinbarratxt-"+c);
-    if (barra) barra.style.width = Math.min(n*20,100) + "%";
-    if (txt) txt.innerText = n;
+function eliminarFoto(id){
+  const input = document.getElementById("foto-"+id);
+  const img = document.getElementById("preview-"+id);
+  const acciones = document.getElementById("fotoActions-"+id);
+  input.value = "";
+  img.src = ""; img.style.display = "none";
+  acciones.style.display = "none";
+  notif("Foto eliminada");
+}
+
+function agregarAccion(preguntaId){
+  const id = "acc" + (++accionCounter);
+  const cont = document.getElementById("acciones-lista-"+preguntaId);
+  const row = document.createElement("div");
+  row.className = "accion-row";
+  row.id = id;
+  row.innerHTML = `
+    <input type="text" placeholder="Descripción de la acción / hallazgo" class="acc-desc">
+    <input type="text" placeholder="Responsable" class="acc-resp">
+    <input type="date" class="acc-fecha">
+    <button type="button" class="acc-remove" onclick="document.getElementById('${id}').remove()">✕</button>`;
+  cont.appendChild(row);
+}
+
+function calcularScores(){
+  const porCat = {};
+  Object.keys(CAT_INFO).forEach(c => porCat[c] = { total:0, cumple:0 });
+  let totalCumple = 0, totalResp = 0;
+  PREGUNTAS_5S.forEach(p => {
+    const r = respuestasActuales[p.id];
+    porCat[p.cat].total++;
+    if (!r) return;
+    totalResp++;
+    const cumple = (r==="no" && p.invertido) || (r==="si" && !p.invertido);
+    if (cumple){ porCat[p.cat].cumple++; totalCumple++; }
   });
-  document.getElementById("din-contador").innerText = total + (total===1 ? " hallazgo registrado" : " hallazgos registrados");
-  document.getElementById("din-total-badge").innerText = total;
+  const porcentajePorCat = {};
+  Object.keys(porCat).forEach(c => {
+    porcentajePorCat[c] = porCat[c].total ? Math.round((porCat[c].cumple / porCat[c].total) * 100) : null;
+  });
+  const general = PREGUNTAS_5S.length ? Math.round((totalCumple / PREGUNTAS_5S.length) * 100) : 0;
+  return { porcentajePorCat, general, totalResp };
+}
+
+function actualizarResumen(){
+  const { porcentajePorCat, general, totalResp } = calcularScores();
+  document.getElementById("resumen-contador").innerText = `${totalResp}/${PREGUNTAS_5S.length} preguntas respondidas`;
+  document.getElementById("resumen-general").innerText = general + "%";
+  document.getElementById("resumen-general").style.color = gaugeColor(general);
+  Object.keys(porcentajePorCat).forEach(c => {
+    const v = porcentajePorCat[c];
+    document.getElementById("barra-"+c).style.width = (v ?? 0) + "%";
+    document.getElementById("barratxt-"+c).innerText = v == null ? "N/A" : v + "%";
+  });
 }
 
 async function subirCloudinary(file){
@@ -402,141 +739,629 @@ async function subirCloudinary(file){
   return data.secure_url;
 }
 
-async function finalizarRecorridoDinamico(){
-  const area = document.getElementById("din-area").value;
-  const auditor = document.getElementById("din-auditor").value.trim();
-  const proceso = document.getElementById("din-proceso").value.trim();
-  if (!area || !auditor) return notif("Completa Área y Auditor antes de finalizar", true);
-
-  const hallazgos = [];
-  Object.keys(CAT_INFO).forEach(cat=>{
-    const cont = document.getElementById("din-lista-"+cat);
-    if (!cont) return;
-    [...cont.children].forEach(div=>{
-      const hid = div.id;
-      const comentario = document.getElementById(hid+"-coment").value.trim();
-      const accion = document.getElementById(hid+"-accion").value.trim();
-      const responsable = document.getElementById(hid+"-resp").value.trim();
-      const fechaLimite = document.getElementById(hid+"-fecha").value;
-      const file = document.getElementById(hid+"-foto").files[0];
-      if (!comentario && !accion && !file) return;
-      hallazgos.push({ hid, categoria:cat, comentario, accion, responsable, fechaLimite, file });
-    });
-  });
-
-  if (!hallazgos.length) return notif("Agrega al menos un hallazgo con información antes de finalizar", true);
-
-  const btn = document.getElementById("btnFinalizarDinamico");
+async function guardarAuditoria(){
+  const area = document.getElementById("aud-area").value;
+  const auditor = document.getElementById("aud-auditor").value.trim();
+  const proceso = document.getElementById("aud-proceso").value.trim();
+  if (!area || !auditor || !proceso) return notif("Completa Área, Auditor y Proceso Auditado", true);
+  for (let i=0; i<PREGUNTAS_5S.length; i++){
+    if (!respuestasActuales[PREGUNTAS_5S[i].id]) return notif("Responde la pregunta " + (i+1) + " (Sí / No)", true);
+  }
+  const btn = document.getElementById("btnGuardarAuditoria");
   btn.disabled = true; btn.innerText = "Guardando...";
-  setLoading(true, "Guardando recorrido experto...");
+  setLoading(true, "Guardando auditoría...");
   try {
     const ahora = new Date(), fechaStr = ahora.toISOString().split("T")[0], semana = getSemanaActual(ahora);
-    const hallazgosGuardados = [];
-    for (let i=0; i<hallazgos.length; i++){
-      const h = hallazgos[i];
+    const respuestas = [];
+    for (let i=0; i<PREGUNTAS_5S.length; i++){
+      const p = PREGUNTAS_5S[i];
+      const r = respuestasActuales[p.id];
+      const cumple = (r==="no" && p.invertido) || (r==="si" && !p.invertido);
       let fotoUrl = "";
-      if (h.file){
-        setLoading(true, `Subiendo foto ${i+1}/${hallazgos.length}...`);
-        fotoUrl = await subirCloudinary(h.file);
+      const file = document.getElementById("foto-"+p.id).files[0];
+      if (file){
+        setLoading(true, `Subiendo foto pregunta ${i+1}/${PREGUNTAS_5S.length}...`);
+        fotoUrl = await subirCloudinary(file);
       }
-      hallazgosGuardados.push({ categoria:h.categoria, comentario:h.comentario, accion:h.accion, responsable:h.responsable, fechaLimite:h.fechaLimite, foto:fotoUrl });
+      const acciones = [];
+      document.querySelectorAll(`#acciones-lista-${p.id} .accion-row`).forEach(row => {
+        const desc = row.querySelector(".acc-desc").value.trim();
+        const resp = row.querySelector(".acc-resp").value.trim();
+        const fecha = row.querySelector(".acc-fecha").value;
+        if (desc) acciones.push({ descripcion:desc, responsable:resp, fechaLimite:fecha });
+      });
+      respuestas.push({
+        id:p.id, categoria:p.cat, pregunta:p.texto, respuesta:r, cumple,
+        comentario: document.getElementById("coment-"+p.id).value.trim(),
+        foto: fotoUrl, acciones
+      });
     }
     setLoading(true, "Guardando registro...");
-    const conteoPorCategoria = {};
-    Object.keys(CAT_INFO).forEach(c => conteoPorCategoria[c] = hallazgosGuardados.filter(h=>h.categoria===c).length);
-
-    const recorrido = {
+    const { porcentajePorCat, general } = calcularScores();
+    const auditoria = {
       numeroEmpleado: usuarioActual.numero, nombreEmpleado: usuarioActual.nombre,
-      tipo: "dinamico", area, auditor, proceso,
-      fecha: ahora, fechaStr, semana,
-      hallazgos: hallazgosGuardados, totalHallazgos: hallazgosGuardados.length, conteoPorCategoria
+      tipo: tipoActual,
+      area, auditor, proceso, fecha: ahora, fechaStr, semana,
+      respuestas, scorePorCategoria: porcentajePorCat, scoreGeneral: general
     };
-    const ref = await db.collection("recorridos5s").add(recorrido);
-
+    const ref = await db.collection("auditorias5s").add(auditoria);
     const batch = db.batch();
-    hallazgosGuardados.forEach(h=>{
-      if (!h.accion) return;
-      const accRef = db.collection("acciones5s").doc();
-      batch.set(accRef, {
-        recorridoId: ref.id, tipo:"dinamico", area, categoria:h.categoria, preguntaId:null,
-        preguntaTexto: h.comentario || "Recorrido experto 5S",
-        descripcion: h.accion, responsable: h.responsable, fechaLimite: h.fechaLimite,
-        estado:"pendiente", fecha:ahora, fechaStr, semana, foto: h.foto || "",
-        numeroEmpleadoAuditor: usuarioActual.numero, nombreEmpleadoAuditor: usuarioActual.nombre, auditor
+    const nuevasAcciones = [];
+    respuestas.forEach(r => {
+      r.acciones.forEach(a => {
+        const accRef = db.collection("acciones5s").doc();
+        const accionData = {
+          auditoriaId: ref.id, tipo: tipoActual, area, categoria:r.categoria, preguntaId:r.id, preguntaTexto:r.pregunta,
+          descripcion:a.descripcion, responsable:a.responsable, fechaLimite:a.fechaLimite,
+          estado:"pendiente", fecha:ahora, fechaStr, semana,
+          numeroEmpleadoAuditor: usuarioActual.numero, nombreEmpleadoAuditor: usuarioActual.nombre, auditor
+        };
+        batch.set(accRef, accionData);
+        nuevasAcciones.push({ id: accRef.id, ...accionData });
       });
     });
     await batch.commit();
 
-    notif("✅ Recorrido guardado — " + hallazgosGuardados.length + " hallazgo(s) registrados");
-    mostrarReporteDinamico({ ...recorrido, id: ref.id });
-    resetDinamico();
+    STATE.auditorias.unshift({ id: ref.id, ...auditoria });
+    STATE.acciones.unshift(...nuevasAcciones);
+    if (STATE.adminCargado){
+      poblarFiltroAreaAcciones();
+      actualizarDashboard();
+      renderHistorial();
+      renderPlanAcciones();
+    }
+
+    notif("✅ Auditoría guardada correctamente — Score general: " + general + "%");
+    resetFormulario();
   } catch(e){
     console.error(e);
-    notif("Error al guardar el recorrido: " + e.message, true);
+    notif("Error al guardar: " + e.message, true);
   } finally {
-    btn.disabled = false; btn.innerText = "🏁 Finalizar Recorrido y Generar Reporte";
+    btn.disabled = false; btn.innerText = "💾 Guardar Auditoría";
     setLoading(false);
   }
 }
 
-function resetDinamico(){
-  const area = document.getElementById("din-area");
-  const proceso = document.getElementById("din-proceso");
-  if (area) area.value = "";
-  if (proceso) proceso.value = "";
-  Object.keys(CAT_INFO).forEach(c=>{
-    const cont = document.getElementById("din-lista-"+c);
-    if (cont) cont.innerHTML = "";
-  });
-  actualizarResumenDinamico();
+function resetFormulario(){
+  respuestasActuales = {};
+  document.getElementById("aud-area").value = "";
+  document.getElementById("aud-proceso").value = "";
+  renderPreguntas();
+  actualizarResumen();
   window.scrollTo({top:0, behavior:"smooth"});
 }
 
-function mostrarReporteDinamico(recorrido){
-  ultimoRecorridoDinamico = recorrido;
-  const f = fechaDe(recorrido.fecha);
-  document.getElementById("reporteDin-meta").innerHTML =
-    `${escapeHTML(recorrido.area)} · ${escapeHTML(recorrido.auditor)}${recorrido.proceso ? ' · '+escapeHTML(recorrido.proceso) : ''} · ${f.toLocaleDateString()} ${f.toLocaleTimeString()} · <b>${recorrido.totalHallazgos} hallazgo(s)</b>`;
-  const cont = document.getElementById("reporteDin-body");
-  cont.innerHTML = "";
-  Object.keys(CAT_INFO).forEach(cat=>{
-    const info = CAT_INFO[cat];
-    const items = recorrido.hallazgos.filter(h=>h.categoria===cat);
-    if (!items.length) return;
-    cont.innerHTML += `<div class="cat-header" style="border-left-color:${info.color}"><span class="cat-badge" style="background:${info.color}22;color:${info.color}">${info.nombre} · ${items.length} hallazgo(s)</span></div>`;
-    items.forEach(h=>{
-      cont.innerHTML += `<div class="detalle-pregunta" style="border-left-color:${info.color}">
-        ${h.comentario ? `<div class="detalle-pregunta-texto">💬 ${escapeHTML(h.comentario)}</div>` : ""}
-        ${h.foto ? `<img src="${h.foto}" class="detalle-foto" onclick="window.open('${h.foto}','_blank')">` : ""}
-        <div class="detalle-accion-row">
-          <span style="flex:1;min-width:160px;"><b>🛠 Acción:</b> ${escapeHTML(h.accion || "—")}</span>
-          <span class="acc-resp-tag">👤 ${escapeHTML(h.responsable||'-')}</span>
-          <span class="acc-fecha-tag">📅 ${h.fechaLimite||'-'}</span>
-        </div>
-      </div>`;
-    });
+document.addEventListener("click", e => {
+  document.querySelectorAll(".multi-select-wrap").forEach(wrap => {
+    if (!wrap.contains(e.target)) closeMS(wrap.id);
   });
-  document.getElementById("modalReporteDinamico").classList.add("abierto");
+});
+function toggleMS(id){
+  const drop = document.getElementById(id+"-drop");
+  const trigger = document.querySelector(`#${id} .multi-select-trigger`);
+  const open = drop.classList.contains("open");
+  document.querySelectorAll(".multi-select-dropdown").forEach(d=>d.classList.remove("open"));
+  document.querySelectorAll(".multi-select-trigger").forEach(t=>t.classList.remove("open"));
+  if (!open){ drop.classList.add("open"); trigger.classList.add("open"); }
+}
+function closeMS(id){
+  const drop = document.getElementById(id+"-drop");
+  const trigger = document.querySelector(`#${id} .multi-select-trigger`);
+  if (drop) drop.classList.remove("open");
+  if (trigger) trigger.classList.remove("open");
+}
+function getSelectedMS(id){
+  return [...document.querySelectorAll(`#${id}-opts input[type=checkbox]:not(#${id}-all):checked`)].map(cb=>cb.value);
+}
+function updateMS(id){
+  const selected = getSelectedMS(id);
+  const allCb = document.getElementById(`${id}-all`);
+  const allOpts = [...document.querySelectorAll(`#${id}-opts input[type=checkbox]:not(#${id}-all)`)];
+  if (allCb) allCb.checked = selected.length === allOpts.length && allOpts.length > 0;
+  document.getElementById(`${id}-label`).textContent =
+    selected.length === 0 ? "Todas las áreas" :
+    selected.length === 1 ? selected[0] : `${selected.length} áreas seleccionadas`;
+  actualizarDashboard(); renderHistorial();
+}
+function toggleAllMS(id){
+  const allCb = document.getElementById(`${id}-all`);
+  [...document.querySelectorAll(`#${id}-opts input[type=checkbox]:not(#${id}-all)`)].forEach(cb=>cb.checked=allCb.checked);
+  updateMS(id);
+}
+function poblarMSAreas(){
+  const opts = document.getElementById("ms-area5s-opts");
+  AREAS_5S.forEach(a=>{
+    const div = document.createElement("div");
+    div.className = "ms-option";
+    div.innerHTML = `<input type="checkbox" value="${a}" onchange="updateMS('ms-area5s')"><label>${a}</label>`;
+    opts.appendChild(div);
+  });
+}
+function poblarFiltroTipoDash(){
+  const sel = document.getElementById("dashFiltroTipo");
+  sel.innerHTML = '<option value="">Todos</option>' + TIPOS_ORDEN.map(t=>`<option value="${t}">${TIPOS_INFO[t].icon} ${TIPOS_INFO[t].nombre}</option>`).join("");
+}
+function limpiarFiltrosDash(){
+  document.querySelectorAll("#ms-area5s-opts input[type=checkbox]").forEach(cb=>cb.checked=false);
+  document.getElementById("ms-area5s-label").textContent = "Todas las áreas";
+  document.getElementById("dashFechaInicio").value = "";
+  document.getElementById("dashFechaFin").value = "";
+  document.getElementById("dashFiltroTipo").value = "";
+  actualizarDashboard(); renderHistorial();
 }
 
-function exportarReporteDinamicoExcel(){
-  if (!ultimoRecorridoDinamico) return notif("No hay un reporte para exportar", true);
-  const r = ultimoRecorridoDinamico;
-  const f = fechaDe(r.fecha);
-  const rows = r.hallazgos.map(h=>({
-    Fecha: f.toLocaleDateString(), Area: r.area, Auditor: r.auditor, "Proceso/Zona": r.proceso||"",
-    Categoria: CAT_INFO[h.categoria]?.nombre || h.categoria,
-    Comentario: h.comentario||"", "Accion correctiva": h.accion||"",
-    Responsable: h.responsable||"", "Fecha limite": h.fechaLimite||"", Foto: h.foto||""
-  }));
+async function toggleAdminPanel(){
+  if (!STATE.adminDesbloqueado){
+    const pass = prompt("Contraseña de administrador:");
+    if (pass !== ADMIN_PASSWORD){ alert("Contraseña incorrecta"); return; }
+    STATE.adminDesbloqueado = true;
+  }
+  const panel = document.getElementById("adminPanelBody");
+  panel.classList.toggle("abierto");
+  if (panel.classList.contains("abierto")) await cargarDatosAdmin();
+}
+
+function cambiarSubtabAdmin(seccion){
+  ["dashboard","historial","acciones","empleados","preguntas"].forEach(s=>{
+    document.getElementById("sec-"+s).classList.toggle("activo", s===seccion);
+    document.getElementById("sub-"+s).classList.toggle("activo", s===seccion);
+  });
+}
+
+async function cargarDatosAdmin(){
+  if (STATE.adminCargado) return;
+  setLoading(true, "Cargando datos de administración...");
+  try {
+    poblarMSAreas();
+    poblarFiltroTipoDash();
+    const [snapA, snapAcc] = await Promise.all([
+      db.collection("auditorias5s").orderBy("fecha","desc").limit(500).get(),
+      db.collection("acciones5s").orderBy("fecha","desc").limit(1000).get()
+    ]);
+    STATE.auditorias = snapA.docs.map(d=>({id:d.id, ...d.data()}));
+    STATE.acciones = snapAcc.docs.map(d=>({id:d.id, ...d.data()}));
+    STATE.adminCargado = true;
+    poblarFiltroAreaAcciones();
+    actualizarDashboard();
+    renderHistorial();
+    renderPlanAcciones();
+    renderPreguntasAdmin();
+  } catch(e){
+    console.error(e);
+    notif("Error cargando datos de administración: " + e.message, true);
+  } finally {
+    setLoading(false);
+  }
+}
+
+function poblarFiltroAreaAcciones(){
+  const sel = document.getElementById("acc-filtroArea");
+  sel.innerHTML = '<option value="">Todas</option>';
+  AREAS_5S.forEach(a=>{ const o=document.createElement("option"); o.value=o.textContent=a; sel.appendChild(o); });
+}
+
+function getAuditoriasFiltradas(){
+  const areas = getSelectedMS("ms-area5s");
+  const tipo = document.getElementById("dashFiltroTipo").value;
+  const fi = document.getElementById("dashFechaInicio").value;
+  const ff = document.getElementById("dashFechaFin").value;
+  let lista = [...STATE.auditorias];
+  if (areas.length) lista = lista.filter(a=>areas.includes(a.area));
+  if (tipo) lista = lista.filter(a=>a.tipo===tipo);
+  if (fi) lista = lista.filter(a=>a.fechaStr >= fi);
+  if (ff) lista = lista.filter(a=>a.fechaStr <= ff);
+  return lista;
+}
+
+function renderGauge(cid, valor, pctId){
+  const v = Math.round(valor || 0), col = gaugeColor(v);
+  if (gaugesAdmin[cid]){
+    const c = gaugesAdmin[cid];
+    c.data.datasets[0].data = [v, 100-v];
+    c.data.datasets[0].backgroundColor[0] = col;
+    c.update("none");
+  } else {
+    const canvas = document.getElementById(cid); if (!canvas) return;
+    gaugesAdmin[cid] = new Chart(canvas.getContext("2d"), {
+      type:"doughnut",
+      data:{ datasets:[{ data:[v,100-v], backgroundColor:[col,"#e2e8f0"], borderWidth:0, cutout:"72%" }] },
+      options:{ animation:false, responsive:true, rotation:-90, circumference:180, plugins:{ legend:{display:false}, tooltip:{enabled:false}, datalabels:{display:false} } }
+    });
+  }
+  if (pctId) document.getElementById(pctId).textContent = v + "%";
+}
+
+function actualizarDashboard(){
+  const lista = getAuditoriasFiltradas();
+  document.getElementById("dash-count").textContent = `(${lista.length} auditorías)`;
+  if (!lista.length){
+    renderGauge("gaugeGeneral5s", 0, "pct-general5s");
+    Object.keys(CAT_INFO).forEach(c=>renderGauge("gauge-"+c, 0, "pct-"+c));
+    actualizarGraficaArea([]);
+    actualizarGraficaTendencia([]);
+    return;
+  }
+  const sumGeneral = lista.reduce((s,a)=>s+(a.scoreGeneral||0),0);
+  renderGauge("gaugeGeneral5s", sumGeneral/lista.length, "pct-general5s");
+  Object.keys(CAT_INFO).forEach(c=>{
+    const vals = lista.map(a=>a.scorePorCategoria?.[c]).filter(v=>v!=null);
+    const avg = vals.length ? vals.reduce((s,v)=>s+v,0)/vals.length : 0;
+    renderGauge("gauge-"+c, avg, "pct-"+c);
+  });
+  actualizarGraficaArea(lista);
+  actualizarGraficaTendencia(lista);
+}
+
+function actualizarGraficaArea(lista){
+  const porArea = {}; AREAS_5S.forEach(a=>porArea[a]=[]);
+  lista.forEach(a=>{ if (porArea[a.area]) porArea[a.area].push(a.scoreGeneral||0); });
+
+  const combinado = AREAS_5S.map(a=>{
+    const v = porArea[a];
+    return { area:a, valor: v.length ? Math.round(v.reduce((s,x)=>s+x,0)/v.length) : 0 };
+  }).sort((a,b)=>b.valor - a.valor);
+
+  const labels = combinado.map(c=>c.area);
+  const data = combinado.map(c=>c.valor);
+
+  const ctx = document.getElementById("graficaArea5s").getContext("2d");
+  if (chartArea) chartArea.destroy();
+  chartArea = new Chart(ctx, {
+    type:"bar",
+    data:{ labels, datasets:[{ label:"Score General %", data, backgroundColor:data.map(v=>v?gaugeColor(v)+"cc":"#e2e8f0"), borderRadius:6 }] },
+    options:{
+      responsive:true,
+      layout:{ padding:{ top:26 } },
+      scales:{ y:{min:0,max:100,ticks:{callback:v=>v+"%"}} },
+      plugins:{
+        legend:{display:false},
+        datalabels:{
+          display: ctx => ctx.dataset.data[ctx.dataIndex] > 0,
+          anchor:"end", align:"top", offset:2,
+          color:"#0f172a",
+          font:{ family:"'Barlow Condensed', sans-serif", weight:800, size:13 },
+          formatter:v=>v+"%"
+        }
+      }
+    },
+    plugins:[ChartDataLabels]
+  });
+}
+
+function actualizarGraficaTendencia(lista){
+  const porSemana = {};
+  lista.forEach(a=>{ if (!porSemana[a.semana]) porSemana[a.semana]=[]; porSemana[a.semana].push(a.scoreGeneral||0); });
+  const semanas = Object.keys(porSemana).sort((a,b)=>a-b);
+  const data = semanas.map(s=>Math.round(porSemana[s].reduce((sum,v)=>sum+v,0)/porSemana[s].length));
+  const ctx = document.getElementById("graficaTendencia5s").getContext("2d");
+  if (chartTendencia) chartTendencia.destroy();
+  chartTendencia = new Chart(ctx, {
+    type:"line",
+    data:{ labels: semanas.map(s=>"Sem "+s), datasets:[{ label:"Score General %", data, borderColor:"#2563eb", backgroundColor:"#2563eb", fill:false, tension:.35, pointRadius:4, pointBackgroundColor:"#2563eb" }] },
+    options:{
+      responsive:true,
+      layout:{ padding:{ top:26 } },
+      scales:{ y:{min:0,max:100,ticks:{callback:v=>v+"%"}} },
+      plugins:{
+        datalabels:{
+          anchor:"end", align:"top", offset:4,
+          color:"#1e3a8a",
+          font:{ family:"'Barlow Condensed', sans-serif", weight:800, size:13 },
+          formatter:v=>v+"%"
+        }
+      }
+    },
+    plugins:[ChartDataLabels]
+  });
+}
+
+function fechaDe(obj){ return obj?.toDate ? obj.toDate() : new Date(obj); }
+
+function renderHistorial(){
+  const lista = getAuditoriasFiltradas().sort((a,b)=>fechaDe(b.fecha)-fechaDe(a.fecha));
+  const tbody = document.getElementById("tablaHistorial5s");
+  tbody.innerHTML = "";
+  lista.slice(0,300).forEach(a=>{
+    const f = fechaDe(a.fecha);
+    const c = a.scorePorCategoria || {};
+    const tipoInfo = TIPOS_INFO[a.tipo] || { nombre:a.tipo||"-", icon:"" };
+    tbody.innerHTML += `<tr>
+      <td>${f.toLocaleDateString()}</td><td>${tipoInfo.icon} ${tipoInfo.nombre}</td><td>${a.area}</td><td>${escapeHTML(a.auditor)}</td><td>${escapeHTML(a.proceso)}</td>
+      <td>${c["1S"]??"-"}%</td><td>${c["2S"]??"-"}%</td><td>${c["3S"]??"-"}%</td><td>${c["4S"]??"-"}%</td><td>${c["5S"]??"-"}%</td>
+      <td><b style="color:${gaugeColor(a.scoreGeneral)}">${a.scoreGeneral}%</b></td>
+      <td><button class="btn btn-azul btn-sm" onclick="verDetalleAuditoria('${a.id}')">👁 Ver</button></td>
+    </tr>`;
+  });
+}
+
+async function verDetalleAuditoria(id){
+  const a = STATE.auditorias.find(x=>x.id===id);
+  if (!a) return;
+  const tipoInfo = TIPOS_INFO[a.tipo] || { nombre:a.tipo||"-", icon:"" };
+  document.getElementById("detalle-titulo").textContent = `${tipoInfo.icon} ${a.area} · ${a.proceso}`;
+  const f = fechaDe(a.fecha);
+  document.getElementById("detalle-meta").innerHTML = `${tipoInfo.nombre} · ${escapeHTML(a.auditor)} · ${f.toLocaleDateString()} ${f.toLocaleTimeString()} · Score general: <b style="color:${gaugeColor(a.scoreGeneral)}">${a.scoreGeneral}%</b>`;
+  const cont = document.getElementById("detalle-body");
+  cont.innerHTML = "Cargando...";
+  document.getElementById("modalDetalle").classList.add("abierto");
+  let accionesPorPregunta = {};
+  try {
+    const accSnap = await db.collection("acciones5s").where("auditoriaId","==",id).get();
+    accSnap.forEach(doc=>{
+      const d = doc.data();
+      (accionesPorPregunta[d.preguntaId] = accionesPorPregunta[d.preguntaId] || []).push({id:doc.id, ...d});
+    });
+  } catch(e){ console.error(e); }
+  cont.innerHTML = "";
+  a.respuestas.forEach(r=>{
+    const info = CAT_INFO[r.categoria];
+    const acciones = accionesPorPregunta[r.id] || [];
+    cont.innerHTML += `<div class="detalle-pregunta" style="border-left-color:${info.color}">
+      <div class="detalle-pregunta-header">
+        <span class="cat-badge" style="background:${info.color}22;color:${info.color}">${info.nombre}</span>
+        <span class="resp-badge ${r.cumple?'cumple':'no-cumple'}">${r.respuesta==='si'?'✅ Sí':'❌ No'} ${r.cumple?'· Cumple':'· No cumple'}</span>
+      </div>
+      <div class="detalle-pregunta-texto">${r.pregunta}</div>
+      ${r.foto ? `<img src="${r.foto}" class="detalle-foto" onclick="window.open('${r.foto}','_blank')">` : ""}
+      ${r.comentario ? `<div class="detalle-comentario">💬 ${escapeHTML(r.comentario)}</div>` : ""}
+      ${acciones.length ? `<div class="detalle-acciones">${acciones.map(ac=>`
+        <div class="detalle-accion-row">
+          <span style="flex:1;min-width:140px;">${escapeHTML(ac.descripcion)}</span>
+          <span class="acc-resp-tag">👤 ${escapeHTML(ac.responsable||'-')}</span>
+          <span class="acc-fecha-tag">📅 ${ac.fechaLimite||'-'}</span>
+          <span class="acc-estado ${ac.estado}" onclick="toggleEstadoAccion('${ac.id}', this)">${ac.estado==='completado'?'✅ Completado':'⏳ Pendiente'}</span>
+        </div>`).join("")}</div>` : ""}
+    </div>`;
+  });
+}
+
+async function toggleEstadoAccion(id, el){
+  const nuevo = el.classList.contains("completado") ? "pendiente" : "completado";
+  try {
+    await db.collection("acciones5s").doc(id).update({ estado: nuevo });
+    el.classList.remove("pendiente","completado"); el.classList.add(nuevo);
+    el.innerText = nuevo === "completado" ? "✅ Completado" : "⏳ Pendiente";
+    const a = STATE.acciones.find(x=>x.id===id); if (a) a.estado = nuevo;
+    renderPlanAcciones();
+  } catch(e){ notif("Error al actualizar acción: "+e.message, true); }
+}
+
+function renderPlanAcciones(){
+  const filArea = document.getElementById("acc-filtroArea").value;
+  const filEstado = document.getElementById("acc-filtroEstado").value;
+  const filResp = (document.getElementById("acc-filtroResp").value||"").toLowerCase().trim();
+  let lista = [...STATE.acciones];
+  if (filArea) lista = lista.filter(a=>a.area===filArea);
+  if (filEstado) lista = lista.filter(a=>a.estado===filEstado);
+  if (filResp) lista = lista.filter(a=>(a.responsable||"").toLowerCase().includes(filResp));
+  lista.sort((a,b)=>(a.fechaLimite||"9999").localeCompare(b.fechaLimite||"9999"));
+  document.getElementById("acc-count").textContent = lista.length;
+  const tbody = document.getElementById("tablaAcciones5s");
+  tbody.innerHTML = "";
+  const hoy = new Date().toISOString().slice(0,10);
+  lista.slice(0,400).forEach(a=>{
+    const f = fechaDe(a.fecha);
+    const vencido = a.fechaLimite && a.fechaLimite < hoy && a.estado!=="completado";
+    tbody.innerHTML += `<tr style="${vencido?'background:#fee2e2':''}">
+      <td>${f.toLocaleDateString()}</td><td>${a.area}</td><td>${CAT_INFO[a.categoria]?.nombre||a.categoria}</td>
+      <td style="white-space:normal;min-width:220px;">${escapeHTML(a.descripcion)}</td>
+      <td>${escapeHTML(a.responsable||"-")}</td>
+      <td>${a.fechaLimite||"-"}${vencido?" ⚠":""}</td>
+      <td><span class="acc-estado ${a.estado}" onclick="toggleEstadoAccion('${a.id}', this)">${a.estado==='completado'?'✅ Completado':'⏳ Pendiente'}</span></td>
+      <td>${escapeHTML(a.auditor||"-")}</td>
+    </tr>`;
+  });
+}
+
+function exportarAuditoriasExcel(){
+  if (!STATE.auditorias.length) return notif("No hay auditorías para exportar", true);
+  const rows = STATE.auditorias.map(a=>{
+    const f = fechaDe(a.fecha); const c = a.scorePorCategoria || {};
+    const tipoInfo = TIPOS_INFO[a.tipo] || { nombre:a.tipo||"" };
+    return {
+      Fecha: f.toLocaleDateString(), Hora: f.toLocaleTimeString(), Semana: a.semana,
+      Tipo: tipoInfo.nombre, Area: a.area, Auditor: a.auditor, Proceso: a.proceso,
+      "1S%": c["1S"]??"", "2S%": c["2S"]??"", "3S%": c["3S"]??"", "4S%": c["4S"]??"", "5S%": c["5S"]??"",
+      "General%": a.scoreGeneral
+    };
+  });
   const ws = XLSX.utils.json_to_sheet(rows);
-  ws["!cols"] = [{wch:12},{wch:18},{wch:22},{wch:22},{wch:20},{wch:45},{wch:35},{wch:20},{wch:14},{wch:50}];
+  ws["!cols"] = [{wch:12},{wch:10},{wch:8},{wch:14},{wch:18},{wch:22},{wch:30},{wch:8},{wch:8},{wch:8},{wch:8},{wch:8},{wch:10}];
   const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, "Recorrido_Experto");
-  XLSX.writeFile(wb, `Recorrido_Experto_5S_${r.fechaStr}.xlsx`);
+  XLSX.utils.book_append_sheet(wb, ws, "Auditorias_5S");
+  XLSX.writeFile(wb, `Auditorias_5S_${new Date().toISOString().slice(0,10)}.xlsx`);
   notif("Excel exportado ✅");
 }
 
+function exportarDetalleExcel(){
+  if (!STATE.auditorias.length) return notif("No hay auditorías para exportar", true);
+  const rows = [];
+  STATE.auditorias.forEach(a=>{
+    const f = fechaDe(a.fecha);
+    const tipoInfo = TIPOS_INFO[a.tipo] || { nombre:a.tipo||"" };
+    a.respuestas.forEach(r=>{
+      rows.push({
+        Fecha: f.toLocaleDateString(), Tipo: tipoInfo.nombre, Area: a.area, Auditor: a.auditor, Proceso: a.proceso,
+        Categoria: r.categoria, Pregunta: r.pregunta, Respuesta: r.respuesta==='si'?'Sí':'No',
+        Cumple: r.cumple ? "Sí" : "No", Comentario: r.comentario||"", Foto: r.foto||""
+      });
+    });
+  });
+  const ws = XLSX.utils.json_to_sheet(rows);
+  ws["!cols"] = [{wch:12},{wch:14},{wch:18},{wch:22},{wch:30},{wch:8},{wch:60},{wch:10},{wch:8},{wch:40},{wch:50}];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Detalle");
+  XLSX.writeFile(wb, `Detalle_Auditorias_5S_${new Date().toISOString().slice(0,10)}.xlsx`);
+  notif("Excel exportado ✅");
+}
+
+function exportarAccionesExcel(){
+  if (!STATE.acciones.length) return notif("No hay acciones para exportar", true);
+  const rows = STATE.acciones.map(a=>{
+    const f = fechaDe(a.fecha);
+    return {
+      Fecha: f.toLocaleDateString(), Area: a.area, Categoria: CAT_INFO[a.categoria]?.nombre||a.categoria,
+      Descripcion: a.descripcion, Responsable: a.responsable||"", "Fecha limite": a.fechaLimite||"",
+      Estado: a.estado, Auditor: a.auditor||""
+    };
+  });
+  const ws = XLSX.utils.json_to_sheet(rows);
+  ws["!cols"] = [{wch:12},{wch:18},{wch:20},{wch:55},{wch:22},{wch:14},{wch:14},{wch:22}];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Plan_Acciones");
+  XLSX.writeFile(wb, `Plan_Acciones_5S_${new Date().toISOString().slice(0,10)}.xlsx`);
+  notif("Excel exportado ✅");
+}
+
+async function subirEmpleadosExcel(){
+  const estado = document.getElementById("emp-estado");
+  const file = document.getElementById("emp-excel").files[0];
+  if (!file){ estado.innerText="Selecciona un archivo Excel"; return; }
+  estado.innerText = "📂 Leyendo...";
+  try {
+    const data = await file.arrayBuffer();
+    const wb = XLSX.read(data);
+    const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
+    let c = 0;
+    for (const row of rows){
+      if (!row.numero || !row.nombre) continue;
+      await db.collection("empleados").doc(String(row.numero)).set({ nombre:String(row.nombre) });
+      c++; estado.innerText = `Subiendo: ${c}/${rows.length}`;
+    }
+    estado.innerText = `✅ ${c} empleados cargados`;
+    document.getElementById("emp-excel").value = "";
+  } catch(e){ estado.innerText = "❌ Error subiendo Excel: " + e.message; }
+}
+
+function descargarPlantillaEmpleados(){
+  const ws = XLSX.utils.json_to_sheet([{numero:"1001",nombre:"Juan Perez"},{numero:"1002",nombre:"Ana Lopez"}]);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Empleados");
+  XLSX.writeFile(wb, "plantilla_empleados.xlsx");
+}
+
+let preguntasEdit = [];
+let tipoAdminActual = "produccion";
+
+function renderPreguntasTipoTabs(){
+  const cont = document.getElementById("preguntasTipoTabs");
+  cont.innerHTML = TIPOS_ORDEN.map(t=>`<button type="button" class="admin-subtab-btn ${t===tipoAdminActual?'activo':''}" onclick="cambiarTipoAdminPreguntas('${t}')">${TIPOS_INFO[t].icon} ${TIPOS_INFO[t].nombre}</button>`).join("");
+}
+
+function cambiarTipoAdminPreguntas(tipo){
+  tipoAdminActual = tipo;
+  renderPreguntasTipoTabs();
+  dibujarPreguntasAdmin();
+}
+
+function initPreguntasAdminCats(){
+  renderPreguntasTipoTabs();
+  const cont = document.getElementById("preguntasAdminCats");
+  cont.innerHTML = Object.keys(CAT_INFO).map(cat=>{
+    const info = CAT_INFO[cat];
+    return `<div class="card">
+      <div class="card-titulo"><span class="cat-badge" style="background:${info.color}22;color:${info.color}">${info.nombre}</span></div>
+      <div id="preg-admin-list-${cat}"></div>
+      <button type="button" class="btn btn-outline btn-sm" onclick="agregarPreguntaAdmin('${cat}')">+ Agregar pregunta a ${cat}</button>
+    </div>`;
+  }).join("");
+}
+
+function renderPreguntasAdmin(){
+  preguntasEdit = PREGUNTAS_TODAS.map(p=>({...p}));
+  dibujarPreguntasAdmin();
+}
+
+function dibujarPreguntasAdmin(){
+  Object.keys(CAT_INFO).forEach(cat=>{
+    const cont = document.getElementById("preg-admin-list-"+cat);
+    if (!cont) return;
+    const items = preguntasEdit.filter(p=>p.cat===cat && p.tipo===tipoAdminActual);
+    if (!items.length){
+      cont.innerHTML = `<p class="pregunta-admin-empty">Sin preguntas en esta categoría para ${TIPOS_INFO[tipoAdminActual].nombre}.</p>`;
+      return;
+    }
+    cont.innerHTML = items.map(p=>{
+      const idx = preguntasEdit.indexOf(p);
+      return `
+      <div class="pregunta-admin-row">
+        <textarea oninput="actualizarCampoPregunta(${idx},'texto',this.value)" placeholder="Texto de la pregunta...">${escapeHTML(p.texto)}</textarea>
+        <div class="pregunta-admin-controls">
+          <label>Cumple si responden:</label>
+          <select onchange="actualizarCampoPregunta(${idx},'invertido', this.value==='no')">
+            <option value="si" ${!p.invertido?'selected':''}>✅ Sí</option>
+            <option value="no" ${p.invertido?'selected':''}>❌ No</option>
+          </select>
+          <label>Categoría:</label>
+          <select onchange="actualizarCampoPregunta(${idx},'cat', this.value)">
+            ${Object.keys(CAT_INFO).map(c=>`<option value="${c}" ${c===p.cat?'selected':''}>${c}</option>`).join("")}
+          </select>
+          <button type="button" class="acc-remove" onclick="eliminarPreguntaAdmin(${idx})" title="Eliminar pregunta">✕</button>
+        </div>
+      </div>`;
+    }).join("");
+  });
+}
+
+function actualizarCampoPregunta(idx, campo, valor){
+  preguntasEdit[idx][campo] = valor;
+  if (campo === 'cat') dibujarPreguntasAdmin();
+}
+
+function agregarPreguntaAdmin(cat){
+  preguntasEdit.push({ id:null, tipo:tipoAdminActual, cat, invertido:false, texto:"" });
+  dibujarPreguntasAdmin();
+}
+
+function eliminarPreguntaAdmin(idx){
+  if (!confirm("¿Eliminar esta pregunta? Esto no se aplicará hasta que guardes los cambios.")) return;
+  preguntasEdit.splice(idx,1);
+  dibujarPreguntasAdmin();
+}
+
+async function guardarPreguntas(){
+  if (!preguntasEdit.length) return notif("Debe haber al menos una pregunta", true);
+  const vacia = preguntasEdit.some(p=>!p.texto.trim());
+  if (vacia) return notif("Hay preguntas con el texto vacío. Complétalas o elimínalas.", true);
+  setLoading(true, "Guardando preguntas...");
+  try {
+    const ordenado = [];
+    TIPOS_ORDEN.forEach(tipo=>{
+      Object.keys(CAT_INFO).forEach(cat=>{
+        preguntasEdit.filter(p=>p.tipo===tipo && p.cat===cat).forEach(p=>ordenado.push(p));
+      });
+    });
+    const snapOld = await db.collection("preguntas5s").get();
+    const batch = db.batch();
+    snapOld.forEach(d=>batch.delete(d.ref));
+    ordenado.forEach((p,i)=>{
+      const ref = db.collection("preguntas5s").doc(String(i+1));
+      batch.set(ref, { tipo:p.tipo, cat:p.cat, invertido:!!p.invertido, texto:p.texto.trim(), orden:i });
+    });
+    await batch.commit();
+    await cargarPreguntas();
+    renderPreguntas();
+    actualizarResumen();
+    renderPreguntasAdmin();
+    notif("✅ Preguntas guardadas correctamente");
+  } catch(e){
+    console.error(e);
+    notif("Error al guardar preguntas: " + e.message, true);
+  } finally {
+    setLoading(false);
+  }
+}
+
+function restaurarPreguntasDefault(){
+  if (!confirm("Esto reemplazará la lista en edición con las preguntas originales de la app (sin guardar todavía). ¿Continuar?")) return;
+  preguntasEdit = [];
+  TIPOS_ORDEN.forEach(tipo=>{
+    PREGUNTAS_5S_DEFAULT_POR_TIPO[tipo].forEach(p=>preguntasEdit.push({...p, tipo}));
+  });
+  dibujarPreguntasAdmin();
+}
+
+initPreguntasAdminCats();
 setLoading(false);
 </script>
 </body>
