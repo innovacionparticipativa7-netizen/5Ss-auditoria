@@ -540,6 +540,31 @@ function exportarReporteDinamicoExcel(){
   notif("Excel exportado ✅");
 }
   /* ====== EXPORTAR REPORTE A POWERPOINT ====== */
+let pptxLibPromise = null;
+function cargarPptxGenJS(){
+  if (window.PptxGenJS) return Promise.resolve();
+  if (pptxLibPromise) return pptxLibPromise;
+  const CDNS = [
+    "https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgenjs.bundle.js",
+    "https://unpkg.com/pptxgenjs@3.12.0/dist/pptxgenjs.bundle.js",
+    "https://cdnjs.cloudflare.com/ajax/libs/pptxgenjs/3.12.0/pptxgen.bundle.js"
+  ];
+  pptxLibPromise = new Promise((resolve, reject) => {
+    let i = 0;
+    function intentar(){
+      if (window.PptxGenJS) return resolve();
+      if (i >= CDNS.length) return reject(new Error("No se pudo cargar la librería PptxGenJS desde ningún servidor. Revisa tu conexión a internet."));
+      const script = document.createElement("script");
+      script.src = CDNS[i++];
+      script.onload = () => window.PptxGenJS ? resolve() : intentar();
+      script.onerror = intentar;
+      document.head.appendChild(script);
+    }
+    intentar();
+  });
+  return pptxLibPromise;
+}
+
 async function imagenABase64(url){
   try{
     const res = await fetch(url);
@@ -557,8 +582,9 @@ async function exportarReporteDinamicoPPTX(){
   if (!ultimoRecorridoDinamico) return notif("No hay un reporte para exportar", true);
   const btn = document.getElementById("btnPPTXDinamico");
   if (btn){ btn.disabled = true; btn.innerText = "Generando..."; }
-  setLoading(true, "Generando PowerPoint...");
+    setLoading(true, "Generando PowerPoint...");
   try {
+    await cargarPptxGenJS();
     const r = ultimoRecorridoDinamico;
     const f = fechaDe(r.fecha);
     const pptx = new PptxGenJS();
