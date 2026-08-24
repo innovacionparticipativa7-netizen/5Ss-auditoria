@@ -8,7 +8,9 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
-<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;900&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet">
+ <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgenjs.bundle.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;900&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet">
+ 
 
 <style>
 :root{
@@ -189,9 +191,10 @@ textarea{min-height:64px;resize:vertical;}
     <div class="modal-sub" id="reporteDin-meta" style="text-align:left;margin-bottom:14px;">—</div>
     <div id="reporteDin-body"></div>
     <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:14px;">
-      <button class="btn btn-verde" onclick="exportarReporteDinamicoExcel()">📥 Exportar Reporte (Excel)</button>
-      <button class="btn btn-outline" onclick="document.getElementById('modalReporteDinamico').classList.remove('abierto')">Cerrar</button>
-    </div>
+  <button class="btn btn-morado" id="btnPPTXDinamico" onclick="exportarReporteDinamicoPPTX()">📊 Descargar PowerPoint</button>
+  <button class="btn btn-verde" onclick="exportarReporteDinamicoExcel()">📥 Exportar Reporte (Excel)</button>
+  <button class="btn btn-outline" onclick="document.getElementById('modalReporteDinamico').classList.remove('abierto')">Cerrar</button>
+</div>
   </div>
 </div>
 
@@ -536,8 +539,112 @@ function exportarReporteDinamicoExcel(){
   XLSX.writeFile(wb, `Recorrido_Experto_5S_${r.fechaStr}.xlsx`);
   notif("Excel exportado ✅");
 }
+  /* ====== EXPORTAR REPORTE A POWERPOINT ====== */
+async function imagenABase64(url){
+  try{
+    const res = await fetch(url);
+    const blob = await res.blob();
+    return await new Promise((resolve,reject)=>{
+      const reader = new FileReader();
+      reader.onloadend = ()=>resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  }catch(e){ console.error("Error convirtiendo imagen:",e); return null; }
+}
+
+async function exportarReporteDinamicoPPTX(){
+  if (!ultimoRecorridoDinamico) return notif("No hay un reporte para exportar", true);
+  const btn = document.getElementById("btnPPTXDinamico");
+  if (btn){ btn.disabled = true; btn.innerText = "Generando..."; }
+  setLoading(true, "Generando PowerPoint...");
+  try {
+    const r = ultimoRecorridoDinamico;
+    const f = fechaDe(r.fecha);
+    const pptx = new PptxGenJS();
+    pptx.defineLayout({ name:"5S", width:13.33, height:7.5 });
+    pptx.layout = "5S";
+
+    // ---- Portada ----
+    let s1 = pptx.addSlide();
+    s1.background = { color:"1E3A8A" };
+    s1.addShape("rect", { x:0, y:0, w:13.33, h:1.4, fill:{color:"FACC15"} });
+    s1.addText("RECORRIDO EXPERTO 5S", { x:0.5, y:0.3, w:12.3, h:0.8, fontSize:32, bold:true, color:"1E3A8A", fontFace:"Arial" });
+    s1.addText([
+      { text:"Área:  ", options:{bold:true} }, { text:(r.area||"—")+"\n" },
+      { text:"Auditor:  ", options:{bold:true} }, { text:(r.auditor||"—")+"\n" },
+      { text:"Proceso / Zona:  ", options:{bold:true} }, { text:(r.proceso||"—")+"\n" },
+      { text:"Fecha:  ", options:{bold:true} }, { text:f.toLocaleDateString()+" "+f.toLocaleTimeString()+"\n\n" },
+      { text:"Total de hallazgos:  ", options:{bold:true, fontSize:22} }, { text:String(r.totalHallazgos), options:{fontSize:22,bold:true} }
+    ], { x:0.6, y:2.1, w:12, h:3.5, fontSize:18, color:"FFFFFF", fontFace:"Arial", lineSpacing:30 });
+
+    // ---- Resumen por categoría ----
+    let s2 = pptx.addSlide();
+    s2.background = { color:"F1F5F9" };
+    s2.addText("RESUMEN POR CATEGORÍA 5S", { x:0.5, y:0.3, w:12, h:0.7, fontSize:24, bold:true, color:"1E3A8A" });
+    let y = 1.5;
+    Object.keys(CAT_INFO).forEach(cat=>{
+      const info = CAT_INFO[cat];
+      const colHex = info.color.replace('#','');
+      const n = r.conteoPorCategoria?.[cat] || 0;
+      s2.addShape("rect", { x:0.6, y:y, w:0.15, h:0.55, fill:{color:colHex} });
+      s2.addText(info.nombre, { x:0.95, y:y, w:7, h:0.55, fontSize:16, bold:true, color:"0F172A", valign:"middle" });
+      s2.addText(n + (n===1?" hallazgo":" hallazgos"), { x:8, y:y, w:4.3, h:0.55, fontSize:16, color:colHex, bold:true, valign:"middle", align:"right" });
+      y += 0.78;
+    });
+
+    // ---- Una diapositiva por cada hallazgo ----
+    for (const cat of Object.keys(CAT_INFO)){
+      const info = CAT_INFO[cat];
+      const colHex = info.color.replace('#','');
+      const items = r.hallazgos.filter(h=>h.categoria===cat);
+      for (let i=0; i<items.length; i++){
+        const h = items[i];
+        let s = pptx.addSlide();
+        s.background = { color:"FFFFFF" };
+        s.addShape("rect", { x:0, y:0, w:0.22, h:7.5, fill:{color:colHex} });
+        s.addText(`${info.nombre} · Hallazgo ${i+1} de ${items.length}`, { x:0.55, y:0.3, w:12, h:0.55, fontSize:19, bold:true, color:colHex });
+
+        let imgB64 = h.foto ? await imagenABase64(h.foto) : null;
+        const textX = imgB64 ? 6.3 : 0.6;
+        const textW = imgB64 ? 6.4 : 12;
+
+        if (imgB64){
+          s.addImage({ data: imgB64, x:0.55, y:1.1, w:5.5, h:5.6, sizing:{ type:"contain", w:5.5, h:5.6 } });
+        }
+        s.addText([
+          { text:"Descripción del hallazgo:\n", options:{bold:true, color:"1E3A8A", fontSize:15} },
+          { text:(h.comentario||"—")+"\n\n", options:{fontSize:14} },
+          { text:"Acción correctiva:\n", options:{bold:true, color:"1E3A8A", fontSize:15} },
+          { text:(h.accion||"—")+"\n\n", options:{fontSize:14} },
+          { text:"Responsable:  ", options:{bold:true, fontSize:14} }, { text:(h.responsable||"—")+"\n", options:{fontSize:14} },
+          { text:"Fecha límite:  ", options:{bold:true, fontSize:14} }, { text:(h.fechaLimite||"—"), options:{fontSize:14} }
+        ], { x:textX, y:1.1, w:textW, h:5.6, color:"0F172A", fontFace:"Arial", valign:"top" });
+      }
+    }
+
+    await pptx.writeFile({ fileName: `Recorrido_Experto_5S_${r.fechaStr}.pptx` });
+    notif("✅ PowerPoint generado y descargado");
+  } catch(e){
+    console.error(e);
+    notif("Error al generar PowerPoint: " + e.message, true);
+  } finally {
+    if (btn){ btn.disabled = false; btn.innerText = "📊 Descargar PowerPoint"; }
+    setLoading(false);
+  }
+}
+
+
+  
 
 setLoading(false);
+
+
+
+
+
+
+  
 </script>
 </body>
 </html>
