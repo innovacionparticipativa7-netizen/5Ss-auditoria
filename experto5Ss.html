@@ -544,9 +544,9 @@ let pptxLibPromise = null;
 function cargarPptxGenJS(){
   if (window.PptxGenJS) return Promise.resolve();
   if (pptxLibPromise) return pptxLibPromise;
-  const CDNS = [
-    "https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgenjs.bundle.js",
-    "https://unpkg.com/pptxgenjs@3.12.0/dist/pptxgenjs.bundle.js",
+    const CDNS = [
+    "https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js",
+    "https://unpkg.com/pptxgenjs@3.12.0/dist/pptxgen.bundle.js",
     "https://cdnjs.cloudflare.com/ajax/libs/pptxgenjs/3.12.0/pptxgen.bundle.js"
   ];
   pptxLibPromise = new Promise((resolve, reject) => {
