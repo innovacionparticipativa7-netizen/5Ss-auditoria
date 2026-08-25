@@ -149,13 +149,10 @@ textarea{min-height:64px;resize:vertical;}
     <div class="card">
       <div class="card-titulo">📍 Datos del Recorrido</div>
       <div class="grid2">
-        <div class="campo">
+                <div class="campo">
           <label>Área</label>
           <select id="din-area">
             <option value="">Selecciona área</option>
-            <option>A330</option><option>A350</option><option>ALMACENES</option><option>BOEING</option>
-            <option>COMAC</option><option>ENVIOS</option><option>FTF A220</option><option>LEGACY</option>
-            <option>METAL WORKS</option><option>MONUMENTOS</option><option>PROCESOS PRIMARIOS</option><option>SHIPLOOSE</option>
           </select>
         </div>
         <div class="campo"><label>Auditor</label><input type="text" id="din-auditor" placeholder="Nombre del auditor"></div>
@@ -221,7 +218,8 @@ const db = firebase.firestore();
 const CLOUDINARY_CLOUD_NAME    = "dc9wxwria";
 const CLOUDINARY_UPLOAD_PRESET = "auditoria_5s";
 
-const AREAS_5S = ["A330","A350","ALMACENES","BOEING","COMAC","ENVIOS","FTF A220","LEGACY","METAL WORKS","MONUMENTOS","PROCESOS PRIMARIOS","SHIPLOOSE"];
+const AREAS_5S_DEFAULT = ["A330","A350","ALMACENES","BOEING","COMAC","ENVIOS","FTF A220","LEGACY","METAL WORKS","MONUMENTOS","PROCESOS PRIMARIOS","SHIPLOOSE"];
+let AREAS_5S = [...AREAS_5S_DEFAULT];
 const CAT_INFO = {
   "1S": { nombre:"1S · Sortear",         color:"#dc2626" },
   "2S": { nombre:"2S · Organizar",       color:"#ea580c" },
@@ -251,8 +249,26 @@ function escapeHTML(str){
   return String(str==null?"":str).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
 }
 function fechaDe(obj){ return obj?.toDate ? obj.toDate() : new Date(obj); }
+async function cargarAreas(){
+  try {
+    const doc = await db.collection("config").doc("areas5s").get();
+    if (doc.exists){
+      const data = doc.data();
+      AREAS_5S = (Array.isArray(data.lista) && data.lista.length) ? data.lista : [...AREAS_5S_DEFAULT];
+    } else {
+      AREAS_5S = [...AREAS_5S_DEFAULT];
+    }
+  } catch(e){
+    console.error(e);
+    AREAS_5S = [...AREAS_5S_DEFAULT];
+  }
+}
 
-/* ====== LOGIN (mismos empleados que la app principal) ====== */
+function renderAreaOptions(){
+  const sel = document.getElementById("din-area");
+  sel.innerHTML = '<option value="">Selecciona área</option>' + AREAS_5S.map(a=>`<option>${escapeHTML(a)}</option>`).join("");
+}
+
 async function buscarEmpleadoLogin(){
   const numero = document.getElementById("login-numero").value;
   const hint = document.getElementById("login-hint");
@@ -278,6 +294,10 @@ async function confirmarLogin(){
     document.getElementById("appPrincipal").style.display = "block";
     document.getElementById("banner-nombre").innerText = usuarioActual.nombre + " · #" + usuarioActual.numero;
     document.getElementById("din-auditor").value = usuarioActual.nombre;
+    setLoading(true, "Cargando áreas...");
+    await cargarAreas();
+    renderAreaOptions();
+    setLoading(false);
     initDinamicoUI();
     initDinResumenBarras();
     actualizarResumenDinamico();
