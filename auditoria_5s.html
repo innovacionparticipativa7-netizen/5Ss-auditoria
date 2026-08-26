@@ -11,6 +11,8 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
  <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;900&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet">
 
 <style>
@@ -221,11 +223,12 @@ tbody tr:hover{background:var(--gris-fondo);}
 <div class="modal-overlay" id="modalReporteAuditoria">
   <div class="modal-box-large" style="position:relative;">
     <button class="modal-close-x" onclick="document.getElementById('modalReporteAuditoria').classList.remove('abierto')">✕</button>
-    <div class="modal-titulo" style="text-align:left;font-size:19px;">🧹 Reporte de Auditoría 5S</div>
+        <div class="modal-titulo" id="repAud-titulo" style="text-align:left;font-size:19px;">🧹 Reporte de Auditoría 5S</div>
     <div class="modal-sub" id="repAud-meta" style="text-align:left;margin-bottom:14px;">—</div>
     <div id="repAud-body"></div>
     <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:14px;">
-      <button class="btn btn-morado" id="btnPPTXAuditoria" onclick="exportarAuditoriaGeneradaPPTX()">📊 Descargar PowerPoint</button>
+            <button class="btn btn-morado" id="btnPPTXAuditoria" onclick="exportarAuditoriaGeneradaPPTX()">📊 Descargar PowerPoint</button>
+      <button class="btn btn-azul" id="btnPDFAuditoria" onclick="exportarReporteAuditoriaPDF()">📄 Descargar PDF</button>
       <button class="btn btn-outline" onclick="document.getElementById('modalReporteAuditoria').classList.remove('abierto')">Cerrar</button>
     </div>
   </div>
@@ -238,7 +241,8 @@ tbody tr:hover{background:var(--gris-fondo);}
     <div class="modal-sub" id="detalle-meta" style="text-align:left;margin-bottom:14px;">—</div>
     <div id="detalle-body"></div>
     <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:14px;">
-      <button class="btn btn-morado" id="btnPPTXDetalle" onclick="exportarDetalleActualPPTX()">📊 Descargar PowerPoint</button>
+            <button class="btn btn-morado" id="btnPPTXDetalle" onclick="exportarDetalleActualPPTX()">📊 Descargar PowerPoint</button>
+      <button class="btn btn-azul" id="btnPDFDetalle" onclick="exportarDetallePDF()">📄 Descargar PDF</button>
     </div>
   </div>
 </div>
@@ -1479,7 +1483,106 @@ function restaurarPreguntasDefault(){
   });
   dibujarPreguntasAdmin();
 }
+/* ====== EXPORTAR A PDF (captura visual exacta) ====== */
+function cargarScriptDinamico(urls, checkFn){
+  return new Promise((resolve, reject) => {
+    if (checkFn()) return resolve();
+    let i = 0;
+    function intentar(){
+      if (checkFn()) return resolve();
+      if (i >= urls.length) return reject(new Error("No se pudo cargar una librería necesaria para el PDF. Revisa tu conexión a internet."));
+      const s = document.createElement("script");
+      s.src = urls[i++];
+      s.onload = () => checkFn() ? resolve() : intentar();
+      s.onerror = intentar;
+      document.head.appendChild(s);
+    }
+    intentar();
+  });
+}
 
+let libsPDFPromise = null;
+function cargarLibsPDF(){
+  if (libsPDFPromise) return libsPDFPromise;
+  libsPDFPromise = Promise.all([
+    cargarScriptDinamico([
+      "https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js",
+      "https://unpkg.com/html2canvas@1.4.1/dist/html2canvas.min.js",
+      "https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"
+    ], () => !!window.html2canvas),
+    cargarScriptDinamico([
+      "https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js",
+      "https://unpkg.com/jspdf@2.5.1/dist/jspdf.umd.min.js",
+      "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"
+    ], () => !!(window.jspdf && window.jspdf.jsPDF))
+  ]);
+  return libsPDFPromise;
+}
+
+async function exportarContenedorAPDF(headerEls, bodyContainerId, nombreArchivo, btnId){
+  const btn = btnId ? document.getElementById(btnId) : null;
+  if (btn){ btn.disabled = true; btn.innerText = "Generando..."; }
+  setLoading(true, "Generando PDF...");
+  try {
+    await cargarLibsPDF();
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF({ unit:"mm", format:"a4" });
+    const pageWidth = 210, pageHeight = 297, margin = 10;
+    const contentWidth = pageWidth - margin*2;
+    let y = margin;
+    let primeraImagen = true;
+
+    const bodyCont = document.getElementById(bodyContainerId);
+    const nodos = [...headerEls.filter(Boolean), ...Array.from(bodyCont.children)];
+
+    for (const nodo of nodos){
+      if (!nodo || nodo.offsetHeight === 0) continue;
+      const canvas = await html2canvas(nodo, { scale:2, useCORS:true, backgroundColor:"#ffffff" });
+      const imgData = canvas.toDataURL("image/jpeg", 0.92);
+      let imgWidth = contentWidth;
+      let imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+      const maxHeight = pageHeight - margin*2;
+      if (imgHeight > maxHeight){
+        imgHeight = maxHeight;
+        imgWidth = (canvas.width * imgHeight) / canvas.height;
+      }
+
+      if (!primeraImagen && (y + imgHeight > pageHeight - margin)){
+        pdf.addPage();
+        y = margin;
+      }
+      primeraImagen = false;
+
+      const x = margin + (contentWidth - imgWidth)/2;
+      pdf.addImage(imgData, "JPEG", x, y, imgWidth, imgHeight);
+      y += imgHeight + 4;
+    }
+
+    pdf.save(nombreArchivo);
+    notif("✅ PDF generado y descargado");
+  } catch(e){
+    console.error(e);
+    notif("Error al generar PDF: " + e.message, true);
+  } finally {
+    if (btn){ btn.disabled = false; btn.innerText = "📄 Descargar PDF"; }
+    setLoading(false);
+  }
+}
+
+async function exportarReporteAuditoriaPDF(){
+  if (!auditoriaParaReporte) return notif("No hay auditoría para exportar", true);
+  const headerEls = [document.getElementById("repAud-titulo"), document.getElementById("repAud-meta")];
+  await exportarContenedorAPDF(headerEls, "repAud-body", `Auditoria_5S_${auditoriaParaReporte.area}_${auditoriaParaReporte.fechaStr}.pdf`, "btnPDFAuditoria");
+}
+
+async function exportarDetallePDF(){
+  if (!auditoriaParaDetallePPTX) return notif("No hay auditoría seleccionada", true);
+  const headerEls = [document.getElementById("detalle-titulo"), document.getElementById("detalle-meta")];
+  await exportarContenedorAPDF(headerEls, "detalle-body", `Auditoria_5S_${auditoriaParaDetallePPTX.area}_${auditoriaParaDetallePPTX.fechaStr}.pdf`, "btnPDFDetalle");
+}
+
+/* ====== EXPORTAR AUDITORÍA A POWERPOINT ====== */
 /* ====== EXPORTAR AUDITORÍA A POWERPOINT ====== */
 let pptxLibPromise = null;
 function cargarPptxGenJS(){
@@ -1522,14 +1625,39 @@ async function imagenABase64(url){
 let auditoriaParaReporte = null;   // guardada al terminar de llenar el formulario
 let auditoriaParaDetallePPTX = null; // seleccionada desde el historial admin
 
+function construirCardsDetalle(respuestas){
+  return respuestas.map(r=>{
+    const info = CAT_INFO[r.categoria];
+    const fotos = (r.fotos && r.fotos.length) ? r.fotos : (r.foto?[r.foto]:[]);
+    const acciones = r.acciones || [];
+    return `<div class="detalle-pregunta" style="border-left-color:${info.color}">
+      <div class="detalle-pregunta-header">
+        <span class="cat-badge" style="background:${info.color}22;color:${info.color}">${info.nombre}</span>
+        <span class="resp-badge ${r.cumple?'cumple':'no-cumple'}">${r.respuesta==='si'?'✅ Sí':'❌ No'} ${r.cumple?'· Cumple':'· No cumple'}</span>
+      </div>
+      <div class="detalle-pregunta-texto">${r.pregunta}</div>
+      ${fotos.length ? `<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px;">${fotos.map(url=>`<img src="${url}" crossorigin="anonymous" class="detalle-foto" style="margin-bottom:0;" onclick="window.open('${url}','_blank')">`).join("")}</div>` : ""}
+      ${r.comentario ? `<div class="detalle-comentario">💬 ${escapeHTML(r.comentario)}</div>` : ""}
+      ${acciones.length ? `<div class="detalle-acciones">${acciones.map(ac=>`
+        <div class="detalle-accion-row">
+          <span style="flex:1;min-width:140px;">${escapeHTML(ac.descripcion)}</span>
+          <span class="acc-resp-tag">👤 ${escapeHTML(ac.responsable||'-')}</span>
+          <span class="acc-fecha-tag">📅 ${ac.fechaLimite||'-'}</span>
+          ${ac.id ? `<span class="acc-estado ${ac.estado}" onclick="toggleEstadoAccion('${ac.id}', this)">${ac.estado==='completado'?'✅ Completado':'⏳ Pendiente'}</span>` : ""}
+        </div>`).join("")}</div>` : ""}
+    </div>`;
+  }).join("");
+}
+
 function mostrarReporteAuditoriaGenerado(auditoria){
   auditoriaParaReporte = auditoria;
   const f = fechaDe(auditoria.fecha);
   const tipoInfo = TIPOS_INFO[auditoria.tipo] || { nombre:auditoria.tipo||"-", icon:"" };
+  document.getElementById("repAud-titulo").textContent = `${tipoInfo.icon} ${auditoria.area} · ${auditoria.proceso}`;
   document.getElementById("repAud-meta").innerHTML =
-    `${tipoInfo.icon} ${tipoInfo.nombre} · ${escapeHTML(auditoria.area)} · ${escapeHTML(auditoria.auditor)} · ${f.toLocaleDateString()} · Score general: <b style="color:${gaugeColor(auditoria.scoreGeneral)}">${auditoria.scoreGeneral}%</b>`;
+    `${tipoInfo.nombre} · ${escapeHTML(auditoria.auditor)} · ${f.toLocaleDateString()} ${f.toLocaleTimeString()} · Score general: <b style="color:${gaugeColor(auditoria.scoreGeneral)}">${auditoria.scoreGeneral}%</b>`;
   const cont = document.getElementById("repAud-body");
-  cont.innerHTML = Object.keys(CAT_INFO).map(cat=>{
+  const barrasHTML = `<div style="margin-bottom:16px;">` + Object.keys(CAT_INFO).map(cat=>{
     const info = CAT_INFO[cat];
     const v = auditoria.scorePorCategoria?.[cat];
     return `<div class="resumen-barra-item" style="display:inline-block;width:18%;margin:0 1% 10px;text-align:center;">
@@ -1537,7 +1665,8 @@ function mostrarReporteAuditoriaGenerado(auditoria){
       <div class="resumen-barra-track"><div class="resumen-barra-fill" style="background:${info.color};width:${v??0}%"></div></div>
       <div class="resumen-barra-txt">${v==null?"N/A":v+"%"}</div>
     </div>`;
-  }).join("");
+  }).join("") + `</div>`;
+  cont.innerHTML = barrasHTML + construirCardsDetalle(auditoria.respuestas);
   document.getElementById("modalReporteAuditoria").classList.add("abierto");
 }
 
