@@ -1172,7 +1172,7 @@ async function verDetalleAuditoria(id){
         <span class="resp-badge ${r.cumple?'cumple':'no-cumple'}">${r.respuesta==='si'?'✅ Sí':'❌ No'} ${r.cumple?'· Cumple':'· No cumple'}</span>
       </div>
       <div class="detalle-pregunta-texto">${r.pregunta}</div>
-      ${r.foto ? `<img src="${r.foto}" class="detalle-foto" onclick="window.open('${r.foto}','_blank')">` : ""}
+            ${r.foto ? `<img src="${r.foto}" crossorigin="anonymous" class="detalle-foto" onclick="window.open('${r.foto}','_blank')">` : ""}
       ${r.comentario ? `<div class="detalle-comentario">💬 ${escapeHTML(r.comentario)}</div>` : ""}
       ${acciones.length ? `<div class="detalle-acciones">${acciones.map(ac=>`
         <div class="detalle-accion-row">
