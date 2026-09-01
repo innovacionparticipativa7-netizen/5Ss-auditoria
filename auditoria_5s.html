@@ -267,6 +267,7 @@ tbody tr:hover{background:var(--gris-fondo);}
         <button class="admin-subtab-btn" id="sub-acciones" onclick="cambiarSubtabAdmin('acciones')">✅ Plan de Acciones</button>
         <button class="admin-subtab-btn" id="sub-empleados" onclick="cambiarSubtabAdmin('empleados')">👥 Empleados</button>
         <button class="admin-subtab-btn" id="sub-areas" onclick="cambiarSubtabAdmin('areas')">🏭 Áreas</button>
+        <button class="admin-subtab-btn" id="sub-procesos" onclick="cambiarSubtabAdmin('procesos')">🔧 Procesos</button>
         <button class="admin-subtab-btn" id="sub-preguntas" onclick="cambiarSubtabAdmin('preguntas')">📝 Preguntas</button>
       </div>
 
@@ -379,6 +380,25 @@ tbody tr:hover{background:var(--gris-fondo);}
         </div>
       </div>
 
+      <div class="admin-seccion" id="sec-procesos">
+        <p style="font-size:13px;color:var(--texto-suave);margin-bottom:14px;line-height:1.6;">
+          Agrega, edita o elimina los procesos disponibles en el campo "Proceso Auditado" del formulario de Auditoría. Los cambios se aplican de inmediato a las próximas auditorías.
+        </p>
+        <div class="card">
+          <div class="card-titulo">🔧 Procesos registrados</div>
+          <div id="procesosAdminLista"></div>
+          <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;">
+            <input type="text" id="nuevoProcesoInput" placeholder="Nombre del nuevo proceso (ej: Pintura Final)" style="flex:1;min-width:180px;" onkeydown="if(event.key==='Enter'){event.preventDefault();agregarProcesoAdmin();}">
+            <button class="btn btn-azul btn-sm" onclick="agregarProcesoAdmin()">+ Agregar</button>
+          </div>
+        </div>
+        <div class="card" style="display:flex;gap:10px;flex-wrap:wrap;">
+          <button class="btn btn-verde" onclick="guardarProcesos()">💾 Guardar Cambios</button>
+          <button class="btn btn-outline" onclick="renderProcesosAdmin()">↺ Descartar cambios</button>
+          <button class="btn btn-rojo" onclick="restaurarProcesosDefault()">⚠ Restaurar procesos originales</button>
+        </div>
+      </div>
+
       <div class="admin-seccion" id="sec-preguntas">
         <p style="font-size:13px;color:var(--texto-suave);margin-bottom:14px;line-height:1.6;">
           Edita el texto de cada pregunta, agrega nuevas o elimínalas, y elige qué área (1S–5S) le corresponde. En cada pregunta selecciona qué respuesta (<b>Sí</b> o <b>No</b>) es la que <b>cumple</b> y suma puntos al porcentaje. Cada <b>tipo de evaluación</b> (Producción, Oficinas, Exteriores) tiene su propio set de preguntas — usa las pestañas para cambiar entre ellas. Los cambios aplican a las próximas auditorías.
@@ -423,18 +443,6 @@ tbody tr:hover{background:var(--gris-fondo);}
         <div class="campo"><label>Proceso Auditado</label>
           <select id="aud-proceso">
             <option value="">Selecciona proceso</option>
-            <option>Laminado</option>
-            <option>Prensas</option>
-            <option>CNC</option>
-            <option>Maquinado</option>
-            <option>Insertos</option>
-            <option>Bondeo</option>
-            <option>Lijado y Pintura</option>
-            <option>Decorado</option>
-            <option>Ensamble Final</option>
-            <option>Test</option>
-            <option>Inspección Final</option>
-            <option>Envíos</option>
           </select>
         </div>
       </div>
@@ -463,6 +471,8 @@ const CLOUDINARY_UPLOAD_PRESET = "auditoria_5s";
 const ADMIN_PASSWORD = "5S2026";
 const AREAS_5S_DEFAULT = ["A330","A350","ALMACENES","BOEING","COMAC","ENVIOS","FTF A220","LEGACY","METAL WORKS","MONUMENTOS","PROCESOS PRIMARIOS","SHIPLOOSE"];
 let AREAS_5S = [...AREAS_5S_DEFAULT];
+const PROCESOS_5S_DEFAULT = ["Laminado","Prensas","CNC","Maquinado","Insertos","Bondeo","Lijado y Pintura","Decorado","Ensamble Final","Test","Inspección Final","Envíos"];
+let PROCESOS_5S = [...PROCESOS_5S_DEFAULT];
 const CAT_INFO = {
   "1S": { nombre:"1S · Sortear",         color:"#dc2626" },
   "2S": { nombre:"2S · Organizar",       color:"#ea580c" },
@@ -613,11 +623,36 @@ async function cargarPreguntas(){
   }
 }
 
+async function cargarProcesos(){
+  try {
+    const ref = db.collection("config").doc("procesos5s");
+    const doc = await ref.get();
+    if (!doc.exists){
+      await ref.set({ lista: PROCESOS_5S_DEFAULT });
+      PROCESOS_5S = [...PROCESOS_5S_DEFAULT];
+    } else {
+      const data = doc.data();
+      PROCESOS_5S = (Array.isArray(data.lista) && data.lista.length) ? data.lista : [...PROCESOS_5S_DEFAULT];
+    }
+  } catch(e){
+    console.error(e);
+    PROCESOS_5S = [...PROCESOS_5S_DEFAULT];
+    notif("No se pudieron cargar los procesos desde la base de datos, se usan valores por defecto", true);
+  }
+}
+
 function renderAreaOptions(){
   const sel = document.getElementById("aud-area");
   const actual = sel.value;
   sel.innerHTML = '<option value="">Selecciona área</option>' + AREAS_5S.map(a=>`<option>${escapeHTML(a)}</option>`).join("");
   if (AREAS_5S.includes(actual)) sel.value = actual;
+}
+
+function renderProcesoOptions(){
+  const sel = document.getElementById("aud-proceso");
+  const actual = sel.value;
+  sel.innerHTML = '<option value="">Selecciona proceso</option>' + PROCESOS_5S.map(p=>`<option>${escapeHTML(p)}</option>`).join("");
+  if (PROCESOS_5S.includes(actual)) sel.value = actual;
 }
 
 async function buscarEmpleadoLogin(){
@@ -646,8 +681,9 @@ async function confirmarLogin(){
     document.getElementById("banner-nombre").innerText = usuarioActual.nombre + " · #" + usuarioActual.numero;
     document.getElementById("aud-auditor").value = usuarioActual.nombre;
     setLoading(true, "Cargando datos de la auditoría...");
-    await Promise.all([cargarPreguntas(), cargarAreas()]);
+    await Promise.all([cargarPreguntas(), cargarAreas(), cargarProcesos()]);
     renderAreaOptions();
+    renderProcesoOptions();
     setLoading(false);
     inicializarFormulario();
   } catch(e){ estado.style.color="var(--rojo)"; estado.innerText="Error de conexión con la base de datos"; }
@@ -970,7 +1006,7 @@ async function toggleAdminPanel(){
 }
 
 function cambiarSubtabAdmin(seccion){
-  ["dashboard","historial","acciones","empleados","areas","preguntas"].forEach(s=>{
+  ["dashboard","historial","acciones","empleados","areas","procesos","preguntas"].forEach(s=>{
     document.getElementById("sec-"+s).classList.toggle("activo", s===seccion);
     document.getElementById("sub-"+s).classList.toggle("activo", s===seccion);
   });
@@ -995,6 +1031,7 @@ async function cargarDatosAdmin(){
     renderPlanAcciones();
     renderPreguntasAdmin();
     renderAreasAdmin();
+    renderProcesosAdmin();
   } catch(e){
     console.error(e);
     notif("Error cargando datos de administración: " + e.message, true);
@@ -1474,6 +1511,74 @@ async function guardarAreas(){
     setLoading(false);
   }
 }
+
+/* ====== ADMIN: PROCESOS A AUDITAR ====== */
+let procesosEdit = [];
+
+function renderProcesosAdmin(){
+  procesosEdit = [...PROCESOS_5S];
+  dibujarProcesosAdmin();
+}
+
+function dibujarProcesosAdmin(){
+  const cont = document.getElementById("procesosAdminLista");
+  if (!cont) return;
+  if (!procesosEdit.length){
+    cont.innerHTML = `<p class="pregunta-admin-empty">No hay procesos registrados.</p>`;
+    return;
+  }
+  cont.innerHTML = procesosEdit.map((p,idx)=>`
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border:1.5px solid var(--gris-borde);border-radius:8px;margin-bottom:6px;background:var(--gris-fondo);">
+      <input type="text" value="${escapeHTML(p)}" oninput="actualizarProcesoAdmin(${idx}, this.value)" style="flex:1;background:#fff;padding:8px 10px;font-size:13px;">
+      <button type="button" class="acc-remove" onclick="eliminarProcesoAdmin(${idx})" title="Eliminar proceso">✕</button>
+    </div>`).join("");
+}
+
+function actualizarProcesoAdmin(idx, valor){
+  procesosEdit[idx] = valor;
+}
+
+function agregarProcesoAdmin(){
+  const input = document.getElementById("nuevoProcesoInput");
+  const val = input.value.trim();
+  if (!val) return notif("Escribe un nombre de proceso", true);
+  if (procesosEdit.some(p=>p.toLowerCase()===val.toLowerCase())) return notif("Ese proceso ya existe", true);
+  procesosEdit.push(val);
+  input.value = "";
+  dibujarProcesosAdmin();
+}
+
+function eliminarProcesoAdmin(idx){
+  if (!confirm("¿Eliminar este proceso? Esto no se aplicará hasta que guardes los cambios.")) return;
+  procesosEdit.splice(idx,1);
+  dibujarProcesosAdmin();
+}
+
+async function guardarProcesos(){
+  const limpios = procesosEdit.map(p=>p.trim()).filter(Boolean);
+  if (!limpios.length) return notif("Debe haber al menos un proceso", true);
+  setLoading(true, "Guardando procesos...");
+  try {
+    await db.collection("config").doc("procesos5s").set({ lista: limpios });
+    PROCESOS_5S = [...limpios];
+    procesosEdit = [...limpios];
+    renderProcesoOptions();
+    dibujarProcesosAdmin();
+    notif("✅ Procesos guardados correctamente");
+  } catch(e){
+    console.error(e);
+    notif("Error al guardar procesos: " + e.message, true);
+  } finally {
+    setLoading(false);
+  }
+}
+
+function restaurarProcesosDefault(){
+  if (!confirm("Esto reemplazará la lista en edición con los procesos originales de la app (sin guardar todavía). ¿Continuar?")) return;
+  procesosEdit = [...PROCESOS_5S_DEFAULT];
+  dibujarProcesosAdmin();
+}
+/* ====== FIN ADMIN: PROCESOS A AUDITAR ====== */
 
 function restaurarPreguntasDefault(){
   if (!confirm("Esto reemplazará la lista en edición con las preguntas originales de la app (sin guardar todavía). ¿Continuar?")) return;
