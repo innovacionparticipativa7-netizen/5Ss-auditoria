@@ -8,9 +8,10 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
- <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;900&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet">
- 
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;900&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet">
 
 <style>
 :root{
@@ -41,12 +42,13 @@ body{font-family:'Barlow',sans-serif;background:var(--gris-fondo);min-height:100
 .nombre-hint{font-size:13px;color:var(--azul-medio);font-weight:600;margin-top:4px;min-height:18px;}
 .modal-close-x{position:absolute;top:14px;right:16px;font-size:20px;cursor:pointer;color:var(--texto-suave);background:none;border:none;}
 
-.app-header{background:linear-gradient(135deg,var(--azul) 0%,#1e40af 100%);padding:13px 16px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 4px 20px rgba(0,0,0,.3);position:sticky;top:0;z-index:90;}
+.app-header{background:linear-gradient(135deg,var(--azul) 0%,#1e40af 100%);padding:13px 16px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 4px 20px rgba(0,0,0,.3);position:sticky;top:0;z-index:90;flex-wrap:wrap;gap:8px;}
 .header-left{display:flex;align-items:center;gap:10px;min-width:0;}
 .header-logo{width:38px;height:38px;background:var(--amarillo);border-radius:10px;display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:15px;color:var(--azul);flex-shrink:0;}
 .header-title{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:15px;color:#fff;letter-spacing:.5px;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .header-sub{font-size:9.5px;color:rgba(255,255,255,.55);margin-top:1px;}
 .btn-admin-discreto{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);color:rgba(255,255,255,.75);font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;padding:8px 14px;border-radius:8px;cursor:pointer;letter-spacing:.5px;text-transform:uppercase;flex-shrink:0;}
+.btn-admin-discreto:hover{background:rgba(255,255,255,.18);color:#fff;}
 
 .container{max-width:640px;margin:0 auto;padding:14px;padding-bottom:60px;}
 .card{background:#fff;border-radius:14px;padding:16px;box-shadow:0 2px 12px rgba(0,0,0,.07);margin-bottom:14px;}
@@ -67,9 +69,12 @@ textarea{min-height:64px;resize:vertical;}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:14px 22px;border:none;border-radius:10px;font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:700;letter-spacing:.5px;cursor:pointer;text-transform:uppercase;}
 .btn-full{width:100%;}
 .btn-verde{background:var(--verde);color:#fff;}
+.btn-azul{background:var(--azul-medio);color:#fff;}
 .btn-morado{background:var(--morado);color:#fff;}
+.btn-gris{background:var(--gris-borde);color:var(--texto);}
 .btn-rojo{background:var(--rojo);color:#fff;}
 .btn-outline{background:transparent;border:2px solid var(--gris-borde);color:var(--texto-suave);}
+.btn-outline:hover{border-color:var(--azul-medio);color:var(--azul-medio);}
 .btn-sm{padding:9px 14px;font-size:12px;}
 .btn:disabled{opacity:.55;cursor:not-allowed;}
 
@@ -97,6 +102,45 @@ textarea{min-height:64px;resize:vertical;}
 .detalle-foto{max-width:220px;border-radius:8px;cursor:pointer;display:block;margin-bottom:8px;}
 .detalle-accion-row{background:#fff;border-radius:8px;padding:8px 12px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:12px;}
 .acc-resp-tag,.acc-fecha-tag{background:var(--gris-fondo);padding:2px 9px;border-radius:20px;font-weight:600;}
+
+/* ===== PANEL ADMIN ===== */
+.admin-panel-outer{max-width:1300px;margin:0 auto;padding:0 14px;}
+.admin-panel-body{display:none;background:#fff;border:1.5px solid var(--gris-borde);border-radius:0 0 14px 14px;border-top:none;padding:18px;box-shadow:0 6px 16px rgba(0,0,0,.08);margin-bottom:16px;}
+.admin-panel-body.abierto{display:block;}
+.admin-subtabs{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;}
+.admin-subtab-btn{padding:8px 16px;border-radius:8px;border:2px solid var(--gris-borde);background:none;cursor:pointer;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--texto-suave);transition:.2s;}
+.admin-subtab-btn:hover{border-color:var(--azul-medio);color:var(--azul-medio);}
+.admin-subtab-btn.activo{background:#eff6ff;border-color:var(--azul-medio);color:var(--azul);}
+.admin-seccion{display:none;}
+.admin-seccion.activo{display:block;}
+.filtros-bar{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:16px;align-items:end;}
+.multi-select-wrap{position:relative;}
+.multi-select-trigger{display:flex;align-items:center;justify-content:space-between;padding:9px 12px;border-radius:9px;border:1.5px solid var(--gris-borde);background:#fff;cursor:pointer;user-select:none;font-size:13px;gap:8px;}
+.multi-select-trigger .arrow{font-size:10px;color:var(--texto-suave);transition:.2s;}
+.multi-select-trigger.open .arrow{transform:rotate(180deg);}
+.multi-select-dropdown{position:absolute;top:calc(100% + 6px);left:0;right:0;background:#fff;border:1px solid var(--gris-borde);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.12);z-index:200;max-height:0;opacity:0;pointer-events:none;overflow:hidden;transition:max-height .2s,opacity .15s;}
+.multi-select-dropdown.open{max-height:260px;opacity:1;pointer-events:all;}
+.ms-options{overflow-y:auto;max-height:240px;padding:4px;}
+.ms-option{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;cursor:pointer;font-size:13px;}
+.ms-option:hover{background:var(--gris-fondo);}
+.ms-option input{width:15px;height:15px;accent-color:var(--azul-medio);cursor:pointer;}
+.ms-all{border-bottom:1px solid var(--gris-borde);margin-bottom:4px;font-weight:700;}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:12px;margin-bottom:16px;}
+.stat-card{text-align:center;}
+.stat-num{font-family:'Barlow Condensed',sans-serif;font-size:30px;font-weight:900;}
+.stat-label{font-size:11px;color:var(--texto-suave);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-top:2px;}
+.table-wrap{overflow-x:auto;border-radius:12px;border:1px solid var(--gris-borde);max-height:480px;overflow-y:auto;}
+table{width:100%;border-collapse:collapse;font-size:12.5px;}
+thead tr{background:var(--azul);color:#fff;position:sticky;top:0;}
+th,td{padding:9px 11px;text-align:left;white-space:nowrap;}
+tbody tr{border-bottom:1px solid var(--gris-borde);}
+tbody tr:hover{background:var(--gris-fondo);}
+.acc-estado{padding:3px 11px;border-radius:20px;font-weight:800;cursor:pointer;font-size:11px;text-transform:uppercase;letter-spacing:.5px;}
+.acc-estado.pendiente{background:#fef3c7;color:#92400e;}
+.acc-estado.completado{background:#dcfce7;color:#15803d;}
+.acc-remove{width:36px;height:36px;border-radius:8px;border:1.5px solid var(--gris-borde);background:#fee2e2;color:var(--rojo);font-weight:800;cursor:pointer;font-size:15px;flex-shrink:0;}
+.area-admin-row{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+.area-admin-row input{flex:1;}
 
 .btn-volver-ip{
   position: fixed; bottom: 18px; right: 18px; z-index: 999;
@@ -130,6 +174,16 @@ textarea{min-height:64px;resize:vertical;}
   </div>
 </div>
 
+<!-- MODAL DETALLE (para "ver" desde el historial admin, si se necesita en el futuro) -->
+<div class="modal-overlay" id="modalDetalle">
+  <div class="modal-box-large" style="position:relative;">
+    <button class="modal-close-x" onclick="document.getElementById('modalDetalle').classList.remove('abierto')">✕</button>
+    <div class="modal-titulo" id="detalle-titulo" style="text-align:left;font-size:19px;">—</div>
+    <div class="modal-sub" id="detalle-meta" style="text-align:left;margin-bottom:14px;">—</div>
+    <div id="detalle-body"></div>
+  </div>
+</div>
+
 <!-- APP -->
 <div id="appPrincipal" style="display:none">
   <div class="app-header">
@@ -140,7 +194,126 @@ textarea{min-height:64px;resize:vertical;}
         <div class="header-sub">Auditor experimentado · sin checklist</div>
       </div>
     </div>
-    <button class="btn-admin-discreto" onclick="logout()">Salir</button>
+    <div style="display:flex;gap:8px;">
+      <button class="btn-admin-discreto" onclick="toggleAdminPanel()">⚙ Admin</button>
+      <button class="btn-admin-discreto" onclick="logout()">Salir</button>
+    </div>
+  </div>
+
+  <div class="admin-panel-outer">
+    <div class="admin-panel-body" id="adminPanelBody">
+      <div class="admin-subtabs">
+        <button class="admin-subtab-btn activo" id="sub-dashboard" onclick="cambiarSubtabAdmin('dashboard')">📊 Dashboard</button>
+        <button class="admin-subtab-btn" id="sub-historial" onclick="cambiarSubtabAdmin('historial')">📅 Historial</button>
+        <button class="admin-subtab-btn" id="sub-acciones" onclick="cambiarSubtabAdmin('acciones')">✅ Plan de Acciones</button>
+        <button class="admin-subtab-btn" id="sub-empleados" onclick="cambiarSubtabAdmin('empleados')">👥 Empleados</button>
+        <button class="admin-subtab-btn" id="sub-areas" onclick="cambiarSubtabAdmin('areas')">📍 Áreas</button>
+      </div>
+
+      <!-- DASHBOARD -->
+      <div class="admin-seccion activo" id="sec-dashboard">
+        <div class="filtros-bar">
+          <div>
+            <label style="margin-bottom:6px;display:block;font-size:11px;font-weight:700;color:var(--texto-suave);text-transform:uppercase;letter-spacing:.5px;">Área</label>
+            <div class="multi-select-wrap" id="ms-areaExp">
+              <div class="multi-select-trigger" onclick="toggleMS('ms-areaExp')">
+                <span id="ms-areaExp-label">Todas las áreas</span><span class="arrow">▼</span>
+              </div>
+              <div class="multi-select-dropdown" id="ms-areaExp-drop">
+                <div class="ms-options" id="ms-areaExp-opts">
+                  <div class="ms-option ms-all"><input type="checkbox" id="ms-areaExp-all" onchange="toggleAllMS('ms-areaExp')"><label for="ms-areaExp-all">Todas</label></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="campo" style="margin-bottom:0;"><label>Desde</label><input type="date" id="dashFechaInicio" onchange="actualizarDashboardExp();renderHistorialExp()"></div>
+          <div class="campo" style="margin-bottom:0;"><label>Hasta</label><input type="date" id="dashFechaFin" onchange="actualizarDashboardExp();renderHistorialExp()"></div>
+          <button class="btn btn-outline btn-sm" onclick="limpiarFiltrosDashExp()">✕ Limpiar filtros</button>
+        </div>
+
+        <div class="stats-grid">
+          <div class="card stat-card"><div class="stat-num" id="stat-recorridos" style="color:var(--azul-medio)">0</div><div class="stat-label">Recorridos</div></div>
+          <div class="card stat-card"><div class="stat-num" id="stat-total-hallazgos" style="color:var(--morado)">0</div><div class="stat-label">Hallazgos totales</div></div>
+          <div class="card stat-card"><div class="stat-num" id="stat-1S" style="color:#dc2626">0</div><div class="stat-label">1S</div></div>
+          <div class="card stat-card"><div class="stat-num" id="stat-2S" style="color:#ea580c">0</div><div class="stat-label">2S</div></div>
+          <div class="card stat-card"><div class="stat-num" id="stat-3S" style="color:#2563eb">0</div><div class="stat-label">3S</div></div>
+          <div class="card stat-card"><div class="stat-num" id="stat-4S" style="color:#7c3aed">0</div><div class="stat-label">4S</div></div>
+          <div class="card stat-card"><div class="stat-num" id="stat-5S" style="color:#16a34a">0</div><div class="stat-label">5S</div></div>
+        </div>
+
+        <div class="card"><div class="card-titulo">📊 Hallazgos por Área</div><canvas id="graficaAreaExp" height="110"></canvas></div>
+        <div class="card"><div class="card-titulo">📈 Tendencia Semanal de Hallazgos</div><canvas id="graficaTendenciaExp" height="110"></canvas></div>
+        <div class="card" style="display:flex;gap:10px;flex-wrap:wrap;">
+          <button class="btn btn-verde" onclick="exportarRecorridosExcel()">📥 Exportar Recorridos</button>
+          <button class="btn btn-azul" onclick="exportarDetalleRecorridosExcel()">📥 Exportar Detalle Completo</button>
+        </div>
+      </div>
+
+      <!-- HISTORIAL -->
+      <div class="admin-seccion" id="sec-historial">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Fecha</th><th>Área</th><th>Auditor</th><th>Proceso/Zona</th><th>1S</th><th>2S</th><th>3S</th><th>4S</th><th>5S</th><th>Total</th><th></th></tr></thead>
+            <tbody id="tablaHistorialExp"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- PLAN DE ACCIONES -->
+      <div class="admin-seccion" id="sec-acciones">
+        <div class="filtros-bar">
+          <div class="campo" style="margin-bottom:0;"><label>Área</label>
+            <select id="acc-filtroArea" onchange="renderPlanAccionesExp()"><option value="">Todas</option></select>
+          </div>
+          <div class="campo" style="margin-bottom:0;"><label>Estado</label>
+            <select id="acc-filtroEstado" onchange="renderPlanAccionesExp()"><option value="">Todos</option><option value="pendiente">Pendiente</option><option value="completado">Completado</option></select>
+          </div>
+          <div class="campo" style="margin-bottom:0;"><label>Responsable</label>
+            <input type="text" id="acc-filtroResp" placeholder="Buscar responsable..." oninput="renderPlanAccionesExp()">
+          </div>
+          <button class="btn btn-verde btn-sm" onclick="exportarAccionesExcelExp()">📥 Exportar Plan de Acciones</button>
+        </div>
+        <p style="font-size:12px;color:var(--texto-suave);margin-bottom:10px;"><span id="acc-count">0</span> acciones · toca el estado para marcar como completado</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Fecha</th><th>Área</th><th>Categoría</th><th>Descripción</th><th>Responsable</th><th>Fecha límite</th><th>Estado</th><th>Auditor</th></tr></thead>
+            <tbody id="tablaAccionesExp"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- EMPLEADOS -->
+      <div class="admin-seccion" id="sec-empleados">
+        <div class="grid2">
+          <div>
+            <div class="campo"><label>Subir Empleados (Excel: columnas numero, nombre)</label><input type="file" id="emp-excel" accept=".xlsx,.xls"></div>
+            <button class="btn btn-gris btn-full" onclick="subirEmpleadosExcel()">Subir Empleados</button>
+            <button class="btn btn-outline btn-full" style="margin-top:8px;" onclick="descargarPlantillaEmpleados()">Descargar Plantilla</button>
+            <div id="emp-estado" style="margin-top:8px;font-size:13px;"></div>
+          </div>
+          <div>
+            <div class="card-titulo" style="font-size:14px;">ℹ️ Información</div>
+            <p style="font-size:13px;color:var(--texto-suave);line-height:1.6;">Los empleados se usan para identificar a la persona que realiza el recorrido al iniciar sesión. Sube un Excel con las columnas <b>numero</b> y <b>nombre</b>. Esta lista es la misma que usa la Auditoría 5S.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ÁREAS -->
+      <div class="admin-seccion" id="sec-areas">
+        <p style="font-size:13px;color:var(--texto-suave);margin-bottom:14px;line-height:1.6;">
+          Administra la lista de áreas disponibles al iniciar un recorrido. Los cambios se guardan en la base de datos.
+        </p>
+        <div class="card">
+          <div id="areasAdminLista"></div>
+          <button type="button" class="btn btn-outline btn-sm" onclick="agregarAreaAdmin()">+ Agregar área</button>
+        </div>
+        <div class="card" style="display:flex;gap:10px;flex-wrap:wrap;">
+          <button class="btn btn-verde" onclick="guardarAreas()">💾 Guardar Áreas</button>
+          <button class="btn btn-outline" onclick="renderAreasAdmin()">↺ Descartar cambios</button>
+          <button class="btn btn-rojo" onclick="restaurarAreasDefault()">⚠ Restaurar áreas originales</button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <div class="container">
@@ -149,7 +322,7 @@ textarea{min-height:64px;resize:vertical;}
     <div class="card">
       <div class="card-titulo">📍 Datos del Recorrido</div>
       <div class="grid2">
-                <div class="campo">
+        <div class="campo">
           <label>Área</label>
           <select id="din-area">
             <option value="">Selecciona área</option>
@@ -188,14 +361,14 @@ textarea{min-height:64px;resize:vertical;}
     <div class="modal-sub" id="reporteDin-meta" style="text-align:left;margin-bottom:14px;">—</div>
     <div id="reporteDin-body"></div>
     <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:14px;">
-  <button class="btn btn-morado" id="btnPPTXDinamico" onclick="exportarReporteDinamicoPPTX()">📊 Descargar PowerPoint</button>
-  <button class="btn btn-verde" onclick="exportarReporteDinamicoExcel()">📥 Exportar Reporte (Excel)</button>
-  <button class="btn btn-outline" onclick="document.getElementById('modalReporteDinamico').classList.remove('abierto')">Cerrar</button>
-</div>
+      <button class="btn btn-morado" id="btnPPTXDinamico" onclick="exportarReporteDinamicoPPTX()">📊 Descargar PowerPoint</button>
+      <button class="btn btn-verde" onclick="exportarReporteDinamicoExcel()">📥 Exportar Reporte (Excel)</button>
+      <button class="btn btn-outline" onclick="document.getElementById('modalReporteDinamico').classList.remove('abierto')">Cerrar</button>
+    </div>
   </div>
 </div>
 
-<!-- Enlace de regreso al panel principal: cambia el href por la URL real de tu app/panel -->
+<!-- Enlace de regreso al panel principal -->
 <a class="btn-volver-ip" href="https://innovacionparticipativa7-netizen.github.io/CI-page/">
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
     <path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/>
@@ -217,6 +390,7 @@ const db = firebase.firestore();
 
 const CLOUDINARY_CLOUD_NAME    = "dc9wxwria";
 const CLOUDINARY_UPLOAD_PRESET = "auditoria_5s";
+const ADMIN_PASSWORD = "5S2026";
 
 const AREAS_5S_DEFAULT = ["A330","A350","ALMACENES","BOEING","COMAC","ENVIOS","FTF A220","LEGACY","METAL WORKS","MONUMENTOS","PROCESOS PRIMARIOS","SHIPLOOSE"];
 let AREAS_5S = [...AREAS_5S_DEFAULT];
@@ -231,6 +405,10 @@ const CAT_INFO = {
 let usuarioActual = { numero:"", nombre:"" };
 let hallazgoCounter = 0;
 let ultimoRecorridoDinamico = null;
+
+const STATE = { recorridos:[], acciones:[], adminCargado:false, adminDesbloqueado:false };
+let chartAreaExp = null, chartTendenciaExp = null;
+let areasEdit = [];
 
 function notif(msg, error=false){
   const el = document.getElementById("notif");
@@ -249,6 +427,7 @@ function escapeHTML(str){
   return String(str==null?"":str).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
 }
 function fechaDe(obj){ return obj?.toDate ? obj.toDate() : new Date(obj); }
+
 async function cargarAreas(){
   try {
     const doc = await db.collection("config").doc("areas5s").get();
@@ -269,6 +448,7 @@ function renderAreaOptions(){
   sel.innerHTML = '<option value="">Selecciona área</option>' + AREAS_5S.map(a=>`<option>${escapeHTML(a)}</option>`).join("");
 }
 
+/* ====== LOGIN ====== */
 async function buscarEmpleadoLogin(){
   const numero = document.getElementById("login-numero").value;
   const hint = document.getElementById("login-hint");
@@ -371,6 +551,12 @@ function agregarHallazgoDinamico(cat){
   cont.appendChild(div);
   actualizarResumenDinamico();
   div.scrollIntoView({behavior:"smooth", block:"center"});
+
+  // Abrir la cámara automáticamente al crear el hallazgo
+  const inputFoto = document.getElementById(hid+"-foto");
+  if (inputFoto) {
+    setTimeout(() => inputFoto.click(), 300);
+  }
 }
 
 function eliminarHallazgoDinamico(hid){
@@ -477,18 +663,30 @@ async function finalizarRecorridoDinamico(){
     const ref = await db.collection("recorridos5s").add(recorrido);
 
     const batch = db.batch();
+    const nuevasAcciones = [];
     hallazgosGuardados.forEach(h=>{
       if (!h.accion) return;
       const accRef = db.collection("acciones5s").doc();
-      batch.set(accRef, {
+      const accionData = {
         recorridoId: ref.id, tipo:"dinamico", area, categoria:h.categoria, preguntaId:null,
         preguntaTexto: h.comentario || "Recorrido experto 5S",
         descripcion: h.accion, responsable: h.responsable, fechaLimite: h.fechaLimite,
         estado:"pendiente", fecha:ahora, fechaStr, semana, foto: h.foto || "",
         numeroEmpleadoAuditor: usuarioActual.numero, nombreEmpleadoAuditor: usuarioActual.nombre, auditor
-      });
+      };
+      batch.set(accRef, accionData);
+      nuevasAcciones.push({ id: accRef.id, ...accionData });
     });
     await batch.commit();
+
+    STATE.recorridos.unshift({ id: ref.id, ...recorrido });
+    STATE.acciones.unshift(...nuevasAcciones);
+    if (STATE.adminCargado){
+      poblarFiltroAreaAccionesExp();
+      actualizarDashboardExp();
+      renderHistorialExp();
+      renderPlanAccionesExp();
+    }
 
     notif("✅ Recorrido guardado — " + hallazgosGuardados.length + " hallazgo(s) registrados");
     mostrarReporteDinamico({ ...recorrido, id: ref.id });
@@ -559,12 +757,13 @@ function exportarReporteDinamicoExcel(){
   XLSX.writeFile(wb, `Recorrido_Experto_5S_${r.fechaStr}.xlsx`);
   notif("Excel exportado ✅");
 }
-  /* ====== EXPORTAR REPORTE A POWERPOINT ====== */
+
+/* ====== EXPORTAR REPORTE A POWERPOINT ====== */
 let pptxLibPromise = null;
 function cargarPptxGenJS(){
   if (window.PptxGenJS) return Promise.resolve();
   if (pptxLibPromise) return pptxLibPromise;
-    const CDNS = [
+  const CDNS = [
     "https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js",
     "https://unpkg.com/pptxgenjs@3.12.0/dist/pptxgen.bundle.js",
     "https://cdnjs.cloudflare.com/ajax/libs/pptxgenjs/3.12.0/pptxgen.bundle.js"
@@ -602,7 +801,7 @@ async function exportarReporteDinamicoPPTX(){
   if (!ultimoRecorridoDinamico) return notif("No hay un reporte para exportar", true);
   const btn = document.getElementById("btnPPTXDinamico");
   if (btn){ btn.disabled = true; btn.innerText = "Generando..."; }
-    setLoading(true, "Generando PowerPoint...");
+  setLoading(true, "Generando PowerPoint...");
   try {
     await cargarPptxGenJS();
     const r = ultimoRecorridoDinamico;
@@ -611,7 +810,6 @@ async function exportarReporteDinamicoPPTX(){
     pptx.defineLayout({ name:"5S", width:13.33, height:7.5 });
     pptx.layout = "5S";
 
-    // ---- Portada ----
     let s1 = pptx.addSlide();
     s1.background = { color:"1E3A8A" };
     s1.addShape("rect", { x:0, y:0, w:13.33, h:1.4, fill:{color:"FACC15"} });
@@ -624,7 +822,6 @@ async function exportarReporteDinamicoPPTX(){
       { text:"Total de hallazgos:  ", options:{bold:true, fontSize:22} }, { text:String(r.totalHallazgos), options:{fontSize:22,bold:true} }
     ], { x:0.6, y:2.1, w:12, h:3.5, fontSize:18, color:"FFFFFF", fontFace:"Arial", lineSpacing:30 });
 
-    // ---- Resumen por categoría ----
     let s2 = pptx.addSlide();
     s2.background = { color:"F1F5F9" };
     s2.addText("RESUMEN POR CATEGORÍA 5S", { x:0.5, y:0.3, w:12, h:0.7, fontSize:24, bold:true, color:"1E3A8A" });
@@ -639,7 +836,6 @@ async function exportarReporteDinamicoPPTX(){
       y += 0.78;
     });
 
-    // ---- Una diapositiva por cada hallazgo ----
     for (const cat of Object.keys(CAT_INFO)){
       const info = CAT_INFO[cat];
       const colHex = info.color.replace('#','');
@@ -680,17 +876,401 @@ async function exportarReporteDinamicoPPTX(){
   }
 }
 
+/* ===================== PANEL ADMIN ===================== */
+async function toggleAdminPanel(){
+  if (!STATE.adminDesbloqueado){
+    const pass = prompt("Contraseña de administrador:");
+    if (pass !== ADMIN_PASSWORD){ alert("Contraseña incorrecta"); return; }
+    STATE.adminDesbloqueado = true;
+  }
+  const panel = document.getElementById("adminPanelBody");
+  panel.classList.toggle("abierto");
+  if (panel.classList.contains("abierto")) await cargarDatosAdmin();
+}
 
-  
+function cambiarSubtabAdmin(seccion){
+  ["dashboard","historial","acciones","empleados","areas"].forEach(s=>{
+    document.getElementById("sec-"+s).classList.toggle("activo", s===seccion);
+    document.getElementById("sub-"+s).classList.toggle("activo", s===seccion);
+  });
+}
+
+async function cargarDatosAdmin(){
+  if (STATE.adminCargado) return;
+  setLoading(true, "Cargando datos de administración...");
+  try {
+    poblarMSAreasExp();
+    const [snapR, snapAcc] = await Promise.all([
+      db.collection("recorridos5s").orderBy("fecha","desc").limit(500).get(),
+      db.collection("acciones5s").orderBy("fecha","desc").limit(1000).get()
+    ]);
+    STATE.recorridos = snapR.docs.map(d=>({id:d.id, ...d.data()}));
+    STATE.acciones = snapAcc.docs.map(d=>({id:d.id, ...d.data()}));
+    STATE.adminCargado = true;
+    poblarFiltroAreaAccionesExp();
+    actualizarDashboardExp();
+    renderHistorialExp();
+    renderPlanAccionesExp();
+    renderAreasAdmin();
+  } catch(e){
+    console.error(e);
+    notif("Error cargando datos de administración: " + e.message, true);
+  } finally {
+    setLoading(false);
+  }
+}
+
+function poblarMSAreasExp(){
+  const opts = document.getElementById("ms-areaExp-opts");
+  opts.querySelectorAll(".ms-option:not(.ms-all)").forEach(el=>el.remove());
+  AREAS_5S.forEach(a=>{
+    const div = document.createElement("div");
+    div.className = "ms-option";
+    div.innerHTML = `<input type="checkbox" value="${escapeHTML(a)}" onchange="updateMSExp()"><label>${escapeHTML(a)}</label>`;
+    opts.appendChild(div);
+  });
+}
+
+function poblarFiltroAreaAccionesExp(){
+  const sel = document.getElementById("acc-filtroArea");
+  sel.innerHTML = '<option value="">Todas</option>';
+  AREAS_5S.forEach(a=>{ const o=document.createElement("option"); o.value=o.textContent=a; sel.appendChild(o); });
+}
+
+document.addEventListener("click", e => {
+  document.querySelectorAll(".multi-select-wrap").forEach(wrap => {
+    if (!wrap.contains(e.target)) closeMS(wrap.id);
+  });
+});
+function toggleMS(id){
+  const drop = document.getElementById(id+"-drop");
+  const trigger = document.querySelector(`#${id} .multi-select-trigger`);
+  const open = drop.classList.contains("open");
+  document.querySelectorAll(".multi-select-dropdown").forEach(d=>d.classList.remove("open"));
+  document.querySelectorAll(".multi-select-trigger").forEach(t=>t.classList.remove("open"));
+  if (!open){ drop.classList.add("open"); trigger.classList.add("open"); }
+}
+function closeMS(id){
+  const drop = document.getElementById(id+"-drop");
+  const trigger = document.querySelector(`#${id} .multi-select-trigger`);
+  if (drop) drop.classList.remove("open");
+  if (trigger) trigger.classList.remove("open");
+}
+function getSelectedMS(id){
+  return [...document.querySelectorAll(`#${id}-opts input[type=checkbox]:not(#${id}-all):checked`)].map(cb=>cb.value);
+}
+function updateMSExp(){
+  const id = "ms-areaExp";
+  const selected = getSelectedMS(id);
+  const allCb = document.getElementById(`${id}-all`);
+  const allOpts = [...document.querySelectorAll(`#${id}-opts input[type=checkbox]:not(#${id}-all)`)];
+  if (allCb) allCb.checked = selected.length === allOpts.length && allOpts.length > 0;
+  document.getElementById(`${id}-label`).textContent =
+    selected.length === 0 ? "Todas las áreas" :
+    selected.length === 1 ? selected[0] : `${selected.length} áreas seleccionadas`;
+  actualizarDashboardExp(); renderHistorialExp();
+}
+function toggleAllMS(id){
+  const allCb = document.getElementById(`${id}-all`);
+  [...document.querySelectorAll(`#${id}-opts input[type=checkbox]:not(#${id}-all)`)].forEach(cb=>cb.checked=allCb.checked);
+  updateMSExp();
+}
+function limpiarFiltrosDashExp(){
+  document.querySelectorAll("#ms-areaExp-opts input[type=checkbox]").forEach(cb=>cb.checked=false);
+  document.getElementById("ms-areaExp-label").textContent = "Todas las áreas";
+  document.getElementById("dashFechaInicio").value = "";
+  document.getElementById("dashFechaFin").value = "";
+  actualizarDashboardExp(); renderHistorialExp();
+}
+
+function getRecorridosFiltrados(){
+  const areas = getSelectedMS("ms-areaExp");
+  const fi = document.getElementById("dashFechaInicio").value;
+  const ff = document.getElementById("dashFechaFin").value;
+  let lista = [...STATE.recorridos];
+  if (areas.length) lista = lista.filter(a=>areas.includes(a.area));
+  if (fi) lista = lista.filter(a=>a.fechaStr >= fi);
+  if (ff) lista = lista.filter(a=>a.fechaStr <= ff);
+  return lista;
+}
+
+function actualizarDashboardExp(){
+  const lista = getRecorridosFiltrados();
+  document.getElementById("stat-recorridos").textContent = lista.length;
+  const totalPorCat = {"1S":0,"2S":0,"3S":0,"4S":0,"5S":0};
+  let totalHallazgos = 0;
+  lista.forEach(r=>{
+    Object.keys(totalPorCat).forEach(c=>{
+      const n = r.conteoPorCategoria?.[c] || 0;
+      totalPorCat[c]+=n; totalHallazgos+=n;
+    });
+  });
+  document.getElementById("stat-total-hallazgos").textContent = totalHallazgos;
+  Object.keys(totalPorCat).forEach(c=>{ document.getElementById("stat-"+c).textContent = totalPorCat[c]; });
+  actualizarGraficaAreaExp(lista);
+  actualizarGraficaTendenciaExp(lista);
+}
+
+function actualizarGraficaAreaExp(lista){
+  const porArea = {}; AREAS_5S.forEach(a=>porArea[a]=0);
+  lista.forEach(r=>{ porArea[r.area] = (porArea[r.area]||0) + (r.totalHallazgos||0); });
+  const combinado = Object.keys(porArea).map(a=>({area:a, valor:porArea[a]})).sort((a,b)=>b.valor-a.valor);
+  const labels = combinado.map(c=>c.area);
+  const data = combinado.map(c=>c.valor);
+  const ctx = document.getElementById("graficaAreaExp").getContext("2d");
+  if (chartAreaExp) chartAreaExp.destroy();
+  chartAreaExp = new Chart(ctx, {
+    type:"bar",
+    data:{ labels, datasets:[{ label:"Hallazgos", data, backgroundColor:data.map(v=>v?"#2563ebcc":"#e2e8f0"), borderRadius:6 }] },
+    options:{
+      responsive:true,
+      layout:{ padding:{ top:26 } },
+      scales:{ y:{ beginAtZero:true, ticks:{precision:0} } },
+      plugins:{
+        legend:{display:false},
+        datalabels:{
+          display: ctx => ctx.dataset.data[ctx.dataIndex] > 0,
+          anchor:"end", align:"top", offset:2,
+          color:"#0f172a",
+          font:{ family:"'Barlow Condensed', sans-serif", weight:800, size:13 },
+          formatter:v=>v
+        }
+      }
+    },
+    plugins:[ChartDataLabels]
+  });
+}
+
+function actualizarGraficaTendenciaExp(lista){
+  const porSemana = {};
+  lista.forEach(r=>{ porSemana[r.semana] = (porSemana[r.semana]||0) + (r.totalHallazgos||0); });
+  const semanas = Object.keys(porSemana).sort((a,b)=>a-b);
+  const data = semanas.map(s=>porSemana[s]);
+  const ctx = document.getElementById("graficaTendenciaExp").getContext("2d");
+  if (chartTendenciaExp) chartTendenciaExp.destroy();
+  chartTendenciaExp = new Chart(ctx, {
+    type:"line",
+    data:{ labels: semanas.map(s=>"Sem "+s), datasets:[{ label:"Hallazgos", data, borderColor:"#7c3aed", backgroundColor:"#7c3aed", fill:false, tension:.35, pointRadius:4, pointBackgroundColor:"#7c3aed" }] },
+    options:{
+      responsive:true,
+      layout:{ padding:{ top:26 } },
+      scales:{ y:{ beginAtZero:true, ticks:{precision:0} } },
+      plugins:{
+        datalabels:{
+          anchor:"end", align:"top", offset:4,
+          color:"#1e3a8a",
+          font:{ family:"'Barlow Condensed', sans-serif", weight:800, size:13 },
+          formatter:v=>v
+        }
+      }
+    },
+    plugins:[ChartDataLabels]
+  });
+}
+
+function renderHistorialExp(){
+  const lista = getRecorridosFiltrados().sort((a,b)=>fechaDe(b.fecha)-fechaDe(a.fecha));
+  const tbody = document.getElementById("tablaHistorialExp");
+  tbody.innerHTML = "";
+  lista.slice(0,300).forEach(r=>{
+    const f = fechaDe(r.fecha);
+    const c = r.conteoPorCategoria || {};
+    tbody.innerHTML += `<tr>
+      <td>${f.toLocaleDateString()}</td><td>${escapeHTML(r.area)}</td><td>${escapeHTML(r.auditor)}</td><td>${escapeHTML(r.proceso||"-")}</td>
+      <td>${c["1S"]??0}</td><td>${c["2S"]??0}</td><td>${c["3S"]??0}</td><td>${c["4S"]??0}</td><td>${c["5S"]??0}</td>
+      <td><b>${r.totalHallazgos??0}</b></td>
+      <td><button class="btn btn-azul btn-sm" onclick="verDetalleRecorridoExp('${r.id}')">👁 Ver</button></td>
+    </tr>`;
+  });
+}
+
+function verDetalleRecorridoExp(id){
+  const r = STATE.recorridos.find(x=>x.id===id);
+  if (!r) return;
+  mostrarReporteDinamico(r);
+}
+
+function renderPlanAccionesExp(){
+  const filArea = document.getElementById("acc-filtroArea").value;
+  const filEstado = document.getElementById("acc-filtroEstado").value;
+  const filResp = (document.getElementById("acc-filtroResp").value||"").toLowerCase().trim();
+  let lista = STATE.acciones.filter(a=>a.tipo==="dinamico");
+  if (filArea) lista = lista.filter(a=>a.area===filArea);
+  if (filEstado) lista = lista.filter(a=>a.estado===filEstado);
+  if (filResp) lista = lista.filter(a=>(a.responsable||"").toLowerCase().includes(filResp));
+  lista.sort((a,b)=>(a.fechaLimite||"9999").localeCompare(b.fechaLimite||"9999"));
+  document.getElementById("acc-count").textContent = lista.length;
+  const tbody = document.getElementById("tablaAccionesExp");
+  tbody.innerHTML = "";
+  const hoy = new Date().toISOString().slice(0,10);
+  lista.slice(0,400).forEach(a=>{
+    const f = fechaDe(a.fecha);
+    const vencido = a.fechaLimite && a.fechaLimite < hoy && a.estado!=="completado";
+    tbody.innerHTML += `<tr style="${vencido?'background:#fee2e2':''}">
+      <td>${f.toLocaleDateString()}</td><td>${escapeHTML(a.area)}</td><td>${CAT_INFO[a.categoria]?.nombre||a.categoria}</td>
+      <td style="white-space:normal;min-width:220px;">${escapeHTML(a.descripcion)}</td>
+      <td>${escapeHTML(a.responsable||"-")}</td>
+      <td>${a.fechaLimite||"-"}${vencido?" ⚠":""}</td>
+      <td><span class="acc-estado ${a.estado}" onclick="toggleEstadoAccionExp('${a.id}', this)">${a.estado==='completado'?'✅ Completado':'⏳ Pendiente'}</span></td>
+      <td>${escapeHTML(a.auditor||"-")}</td>
+    </tr>`;
+  });
+}
+
+async function toggleEstadoAccionExp(id, el){
+  const nuevo = el.classList.contains("completado") ? "pendiente" : "completado";
+  try {
+    await db.collection("acciones5s").doc(id).update({ estado: nuevo });
+    el.classList.remove("pendiente","completado"); el.classList.add(nuevo);
+    el.innerText = nuevo === "completado" ? "✅ Completado" : "⏳ Pendiente";
+    const a = STATE.acciones.find(x=>x.id===id); if (a) a.estado = nuevo;
+    renderPlanAccionesExp();
+  } catch(e){ notif("Error al actualizar acción: "+e.message, true); }
+}
+
+function exportarRecorridosExcel(){
+  if (!STATE.recorridos.length) return notif("No hay recorridos para exportar", true);
+  const rows = STATE.recorridos.map(r=>{
+    const f = fechaDe(r.fecha); const c = r.conteoPorCategoria || {};
+    return {
+      Fecha: f.toLocaleDateString(), Hora: f.toLocaleTimeString(), Semana: r.semana,
+      Area: r.area, Auditor: r.auditor, "Proceso/Zona": r.proceso||"",
+      "1S": c["1S"]??0, "2S": c["2S"]??0, "3S": c["3S"]??0, "4S": c["4S"]??0, "5S": c["5S"]??0,
+      "Total hallazgos": r.totalHallazgos??0
+    };
+  });
+  const ws = XLSX.utils.json_to_sheet(rows);
+  ws["!cols"] = [{wch:12},{wch:10},{wch:8},{wch:18},{wch:22},{wch:26},{wch:6},{wch:6},{wch:6},{wch:6},{wch:6},{wch:14}];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Recorridos_Experto");
+  XLSX.writeFile(wb, `Recorridos_Experto_5S_${new Date().toISOString().slice(0,10)}.xlsx`);
+  notif("Excel exportado ✅");
+}
+
+function exportarDetalleRecorridosExcel(){
+  if (!STATE.recorridos.length) return notif("No hay recorridos para exportar", true);
+  const rows = [];
+  STATE.recorridos.forEach(r=>{
+    const f = fechaDe(r.fecha);
+    (r.hallazgos||[]).forEach(h=>{
+      rows.push({
+        Fecha: f.toLocaleDateString(), Area: r.area, Auditor: r.auditor, "Proceso/Zona": r.proceso||"",
+        Categoria: CAT_INFO[h.categoria]?.nombre||h.categoria, Comentario: h.comentario||"",
+        "Accion correctiva": h.accion||"", Responsable: h.responsable||"", "Fecha limite": h.fechaLimite||"", Foto: h.foto||""
+      });
+    });
+  });
+  const ws = XLSX.utils.json_to_sheet(rows);
+  ws["!cols"] = [{wch:12},{wch:18},{wch:22},{wch:26},{wch:20},{wch:45},{wch:35},{wch:20},{wch:14},{wch:50}];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Detalle_Recorridos");
+  XLSX.writeFile(wb, `Detalle_Recorridos_5S_${new Date().toISOString().slice(0,10)}.xlsx`);
+  notif("Excel exportado ✅");
+}
+
+function exportarAccionesExcelExp(){
+  const lista = STATE.acciones.filter(a=>a.tipo==="dinamico");
+  if (!lista.length) return notif("No hay acciones para exportar", true);
+  const rows = lista.map(a=>{
+    const f = fechaDe(a.fecha);
+    return {
+      Fecha: f.toLocaleDateString(), Area: a.area, Categoria: CAT_INFO[a.categoria]?.nombre||a.categoria,
+      Descripcion: a.descripcion, Responsable: a.responsable||"", "Fecha limite": a.fechaLimite||"",
+      Estado: a.estado, Auditor: a.auditor||""
+    };
+  });
+  const ws = XLSX.utils.json_to_sheet(rows);
+  ws["!cols"] = [{wch:12},{wch:18},{wch:20},{wch:55},{wch:22},{wch:14},{wch:14},{wch:22}];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Plan_Acciones");
+  XLSX.writeFile(wb, `Plan_Acciones_Experto_5S_${new Date().toISOString().slice(0,10)}.xlsx`);
+  notif("Excel exportado ✅");
+}
+
+async function subirEmpleadosExcel(){
+  const estado = document.getElementById("emp-estado");
+  const file = document.getElementById("emp-excel").files[0];
+  if (!file){ estado.innerText="Selecciona un archivo Excel"; return; }
+  estado.innerText = "📂 Leyendo...";
+  try {
+    const data = await file.arrayBuffer();
+    const wb = XLSX.read(data);
+    const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
+    let c = 0;
+    for (const row of rows){
+      if (!row.numero || !row.nombre) continue;
+      await db.collection("empleados").doc(String(row.numero)).set({ nombre:String(row.nombre) });
+      c++; estado.innerText = `Subiendo: ${c}/${rows.length}`;
+    }
+    estado.innerText = `✅ ${c} empleados cargados`;
+    document.getElementById("emp-excel").value = "";
+  } catch(e){ estado.innerText = "❌ Error subiendo Excel: " + e.message; }
+}
+
+function descargarPlantillaEmpleados(){
+  const ws = XLSX.utils.json_to_sheet([{numero:"1001",nombre:"Juan Perez"},{numero:"1002",nombre:"Ana Lopez"}]);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Empleados");
+  XLSX.writeFile(wb, "plantilla_empleados.xlsx");
+}
+
+/* ====== ÁREAS ADMIN ====== */
+function renderAreasAdmin(){
+  areasEdit = [...AREAS_5S];
+  dibujarAreasAdmin();
+}
+
+function dibujarAreasAdmin(){
+  const cont = document.getElementById("areasAdminLista");
+  if (!areasEdit.length){
+    cont.innerHTML = `<p style="font-size:13px;color:var(--texto-suave);padding:6px 0 12px;">No hay áreas. Agrega al menos una.</p>`;
+    return;
+  }
+  cont.innerHTML = areasEdit.map((a,idx)=>`
+    <div class="area-admin-row">
+      <input type="text" value="${escapeHTML(a)}" oninput="areasEdit[${idx}]=this.value">
+      <button type="button" class="acc-remove" onclick="eliminarAreaAdmin(${idx})" title="Eliminar área">✕</button>
+    </div>`).join("");
+}
+
+function agregarAreaAdmin(){
+  areasEdit.push("");
+  dibujarAreasAdmin();
+}
+
+function eliminarAreaAdmin(idx){
+  areasEdit.splice(idx,1);
+  dibujarAreasAdmin();
+}
+
+async function guardarAreas(){
+  const limpias = areasEdit.map(a=>a.trim()).filter(Boolean);
+  if (!limpias.length) return notif("Debe haber al menos un área", true);
+  setLoading(true, "Guardando áreas...");
+  try {
+    await db.collection("config").doc("areas5s").set({ lista: limpias });
+    AREAS_5S = limpias;
+    renderAreaOptions();
+    poblarMSAreasExp();
+    poblarFiltroAreaAccionesExp();
+    renderAreasAdmin();
+    notif("✅ Áreas guardadas correctamente");
+  } catch(e){
+    console.error(e);
+    notif("Error al guardar áreas: " + e.message, true);
+  } finally {
+    setLoading(false);
+  }
+}
+
+function restaurarAreasDefault(){
+  if (!confirm("Esto reemplazará la lista en edición con las áreas originales de la app (sin guardar todavía). ¿Continuar?")) return;
+  areasEdit = [...AREAS_5S_DEFAULT];
+  dibujarAreasAdmin();
+}
 
 setLoading(false);
-
-
-
-
-
-
-  
 </script>
 </body>
+</html>
 </html>
