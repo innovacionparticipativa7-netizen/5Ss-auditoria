@@ -93,6 +93,10 @@ textarea{min-height:60px;resize:vertical;}
 .resp-btn.resp-no.activo{background:#fee2e2;border-color:var(--rojo);color:#b91c1c;}
 .foto-preview{display:none;max-width:100%;border-radius:10px;margin-top:8px;max-height:240px;object-fit:cover;}
 .foto-actions{display:none;margin-top:8px;}
+ .fotos-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:4px;}
+@media(max-width:560px){.fotos-grid{grid-template-columns:1fr;}}
+.foto-slot{border:1.5px dashed var(--gris-borde);border-radius:9px;padding:8px;}
+.foto-slot-label{font-size:10.5px;color:var(--texto-suave);font-weight:700;margin-bottom:6px;display:block;text-transform:uppercase;letter-spacing:.5px;}
 .acciones-wrap{margin-top:14px;border-top:1.5px dashed var(--gris-borde);padding-top:12px;}
 .acciones-wrap>label{display:block;font-size:11px;font-weight:700;color:var(--texto-suave);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;}
 .accion-row{display:grid;grid-template-columns:1.4fr 1fr 130px 36px;gap:6px;margin-bottom:8px;align-items:center;}
@@ -733,12 +737,18 @@ function renderPreguntas(){
         <button type="button" class="resp-btn resp-si" onclick="setRespuesta('${p.id}','si',this)">✅ Sí</button>
         <button type="button" class="resp-btn resp-no" onclick="setRespuesta('${p.id}','no',this)">❌ No</button>
       </div>
-      <div class="campo">
-        <label>📷 Foto de evidencia</label>
-        <input type="file" accept="image/*" capture="environment" id="foto-${p.id}" onchange="previewFoto('${p.id}')">
-        <img id="preview-${p.id}" class="foto-preview">
-        <div class="foto-actions" id="fotoActions-${p.id}">
-          <button type="button" class="btn btn-rojo btn-sm" onclick="eliminarFoto('${p.id}')">🗑 Eliminar foto</button>
+            <div class="campo">
+        <label>📷 Fotos de evidencia (máx. 3)</label>
+        <div class="fotos-grid">
+          ${[1,2,3].map(n=>`
+          <div class="foto-slot">
+            <span class="foto-slot-label">Foto ${n}${n>1?' (opcional)':''}</span>
+            <input type="file" accept="image/*" capture="environment" id="foto-${p.id}-${n}" onchange="previewFoto('${p.id}',${n})">
+            <img id="preview-${p.id}-${n}" class="foto-preview">
+            <div class="foto-actions" id="fotoActions-${p.id}-${n}">
+              <button type="button" class="btn btn-rojo btn-sm" onclick="eliminarFoto('${p.id}',${n})">🗑 Eliminar</button>
+            </div>
+          </div>`).join("")}
         </div>
       </div>
       <div class="campo" style="margin-bottom:0;">
@@ -762,20 +772,20 @@ function setRespuesta(id, val, btn){
   actualizarResumen();
 }
 
-function previewFoto(id){
-  const file = document.getElementById("foto-"+id).files[0];
-  const img = document.getElementById("preview-"+id);
-  const acciones = document.getElementById("fotoActions-"+id);
+function previewFoto(id, n){
+  const file = document.getElementById(`foto-${id}-${n}`).files[0];
+  const img = document.getElementById(`preview-${id}-${n}`);
+  const acciones = document.getElementById(`fotoActions-${id}-${n}`);
   if (!file){ img.style.display = "none"; img.src=""; acciones.style.display="none"; return; }
   const reader = new FileReader();
   reader.onload = e => { img.src = e.target.result; img.style.display = "block"; acciones.style.display="block"; };
   reader.readAsDataURL(file);
 }
 
-function eliminarFoto(id){
-  const input = document.getElementById("foto-"+id);
-  const img = document.getElementById("preview-"+id);
-  const acciones = document.getElementById("fotoActions-"+id);
+function eliminarFoto(id, n){
+  const input = document.getElementById(`foto-${id}-${n}`);
+  const img = document.getElementById(`preview-${id}-${n}`);
+  const acciones = document.getElementById(`fotoActions-${id}-${n}`);
   input.value = "";
   img.src = ""; img.style.display = "none";
   acciones.style.display = "none";
@@ -856,11 +866,14 @@ async function guardarAuditoria(){
       const p = PREGUNTAS_5S[i];
       const r = respuestasActuales[p.id];
       const cumple = (r==="no" && p.invertido) || (r==="si" && !p.invertido);
-      let fotoUrl = "";
-      const file = document.getElementById("foto-"+p.id).files[0];
-      if (file){
-        setLoading(true, `Subiendo foto pregunta ${i+1}/${PREGUNTAS_5S.length}...`);
-        fotoUrl = await subirCloudinary(file);
+      const fotosUrls = [];
+      for (let fn=1; fn<=3; fn++){
+        const fInput = document.getElementById(`foto-${p.id}-${fn}`);
+        const fFile = fInput && fInput.files[0];
+        if (fFile){
+          setLoading(true, `Subiendo foto ${fn} de pregunta ${i+1}/${PREGUNTAS_5S.length}...`);
+          fotosUrls.push(await subirCloudinary(fFile));
+        }
       }
       const acciones = [];
       document.querySelectorAll(`#acciones-lista-${p.id} .accion-row`).forEach(row => {
@@ -872,7 +885,7 @@ async function guardarAuditoria(){
       respuestas.push({
         id:p.id, categoria:p.cat, pregunta:p.texto, respuesta:r, cumple,
         comentario: document.getElementById("coment-"+p.id).value.trim(),
-        foto: fotoUrl, acciones
+        foto: fotosUrls[0] || "", fotos: fotosUrls, acciones
       });
     }
     setLoading(true, "Guardando registro...");
@@ -1199,27 +1212,8 @@ async function verDetalleAuditoria(id){
       (accionesPorPregunta[d.preguntaId] = accionesPorPregunta[d.preguntaId] || []).push({id:doc.id, ...d});
     });
   } catch(e){ console.error(e); }
-  cont.innerHTML = "";
-  a.respuestas.forEach(r=>{
-    const info = CAT_INFO[r.categoria];
-    const acciones = accionesPorPregunta[r.id] || [];
-    cont.innerHTML += `<div class="detalle-pregunta" style="border-left-color:${info.color}">
-      <div class="detalle-pregunta-header">
-        <span class="cat-badge" style="background:${info.color}22;color:${info.color}">${info.nombre}</span>
-        <span class="resp-badge ${r.cumple?'cumple':'no-cumple'}">${r.respuesta==='si'?'✅ Sí':'❌ No'} ${r.cumple?'· Cumple':'· No cumple'}</span>
-      </div>
-      <div class="detalle-pregunta-texto">${r.pregunta}</div>
-            ${r.foto ? `<img src="${r.foto}" crossorigin="anonymous" class="detalle-foto" onclick="window.open('${r.foto}','_blank')">` : ""}
-      ${r.comentario ? `<div class="detalle-comentario">💬 ${escapeHTML(r.comentario)}</div>` : ""}
-      ${acciones.length ? `<div class="detalle-acciones">${acciones.map(ac=>`
-        <div class="detalle-accion-row">
-          <span style="flex:1;min-width:140px;">${escapeHTML(ac.descripcion)}</span>
-          <span class="acc-resp-tag">👤 ${escapeHTML(ac.responsable||'-')}</span>
-          <span class="acc-fecha-tag">📅 ${ac.fechaLimite||'-'}</span>
-          <span class="acc-estado ${ac.estado}" onclick="toggleEstadoAccion('${ac.id}', this)">${ac.estado==='completado'?'✅ Completado':'⏳ Pendiente'}</span>
-        </div>`).join("")}</div>` : ""}
-    </div>`;
-  });
+  const respuestasConAcciones = a.respuestas.map(r => ({ ...r, acciones: accionesPorPregunta[r.id] || [] }));
+  cont.innerHTML = construirCardsDetalle(respuestasConAcciones);
 }
 
 async function toggleEstadoAccion(id, el){
@@ -1290,7 +1284,7 @@ function exportarDetalleExcel(){
       rows.push({
         Fecha: f.toLocaleDateString(), Tipo: tipoInfo.nombre, Area: a.area, Auditor: a.auditor, Proceso: a.proceso,
         Categoria: r.categoria, Pregunta: r.pregunta, Respuesta: r.respuesta==='si'?'Sí':'No',
-        Cumple: r.cumple ? "Sí" : "No", Comentario: r.comentario||"", Foto: r.foto||""
+                Cumple: r.cumple ? "Sí" : "No", Comentario: r.comentario||"", Foto: (r.fotos && r.fotos.length) ? r.fotos.join(" | ") : (r.foto||"")
       });
     });
   });
@@ -1826,12 +1820,22 @@ async function generarPPTXAuditoria(auditoria, nombreArchivo){
     s.addText(r.cumple ? "✅ CUMPLE" : "❌ NO CUMPLE", { x:9.3, y:0.3, w:3.5, h:0.5, fontSize:16, bold:true, color: r.cumple ? "16A34A" : "DC2626", align:"right" });
     s.addText(r.pregunta, { x:0.55, y:0.85, w:12.3, h:1.15, fontSize:13, color:"0F172A", fontFace:"Arial" });
 
-    let imgB64 = r.foto ? await imagenABase64(r.foto) : null;
-    const textX = imgB64 ? 6.3 : 0.6;
-    const textW = imgB64 ? 6.4 : 12;
+    const fotosPregunta = (r.fotos && r.fotos.length) ? r.fotos : (r.foto ? [r.foto] : []);
+    const imgB64s = [];
+    for (const urlFoto of fotosPregunta){
+      const b64 = await imagenABase64(urlFoto);
+      if (b64) imgB64s.push(b64);
+    }
+    const textX = imgB64s.length ? 6.3 : 0.6;
+    const textW = imgB64s.length ? 6.4 : 12;
 
-    if (imgB64){
-      s.addImage({ data: imgB64, x:0.55, y:2.15, w:5.5, h:4.6, sizing:{ type:"contain", w:5.5, h:4.6 } });
+    if (imgB64s.length){
+      const boxX=0.55, boxY=2.15, boxW=5.5, boxH=4.6, gap=0.12;
+      const n = imgB64s.length;
+      const eachH = (boxH - gap*(n-1)) / n;
+      imgB64s.forEach((b64,idx)=>{
+        s.addImage({ data:b64, x:boxX, y:boxY+idx*(eachH+gap), w:boxW, h:eachH, sizing:{ type:"contain", w:boxW, h:eachH } });
+      });
     }
 
     const accionesTxt = (r.acciones && r.acciones.length)
