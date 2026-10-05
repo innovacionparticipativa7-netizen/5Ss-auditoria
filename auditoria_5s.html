@@ -13,7 +13,9 @@
  <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+ <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;900&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet">
+ 
 
 <style>
 :root{
@@ -160,6 +162,22 @@ tbody tr:hover{background:var(--gris-fondo);}
 .pregunta-admin-controls label{font-size:11px;font-weight:700;color:var(--texto-suave);text-transform:uppercase;letter-spacing:.5px;white-space:nowrap;}
 .pregunta-admin-controls select{width:auto;flex:1;min-width:130px;}
 .pregunta-admin-empty{font-size:13px;color:var(--texto-suave);padding:6px 0 12px;}
+ /* ===== SEGUIMIENTO DE HALLAZGOS ===== */
+.seg-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px;}
+@media(max-width:560px){.seg-kpis{grid-template-columns:repeat(2,1fr);}}
+.seg-kpi{background:#fff;border-radius:12px;padding:12px 8px;text-align:center;box-shadow:0 2px 10px rgba(0,0,0,.06);border-top:4px solid;}
+.seg-kpi-num{font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:900;color:var(--texto);line-height:1;}
+.seg-kpi-lbl{font-size:10.5px;font-weight:700;color:var(--texto-suave);text-transform:uppercase;letter-spacing:.5px;margin-top:4px;}
+.seg-card{background:#fff;border-left:6px solid;border-radius:12px;padding:14px 16px;margin-bottom:12px;box-shadow:0 2px 10px rgba(0,0,0,.06);}
+.seg-head{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;margin-bottom:10px;}
+.seg-label{font-size:10.5px;font-weight:700;color:var(--texto-suave);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;}
+.seg-txt{font-size:13.5px;line-height:1.5;color:var(--texto);margin-bottom:10px;white-space:pre-line;}
+.seg-meta{display:flex;flex-wrap:wrap;gap:6px;font-size:12px;}
+.seg-badge{font-size:11px;font-weight:800;padding:4px 11px;border-radius:20px;text-transform:uppercase;letter-spacing:.4px;}
+.seg-badge.abierto{background:#fef3c7;color:#92400e;}
+.seg-badge.vencido{background:#fee2e2;color:#b91c1c;}
+.seg-badge.cerrado{background:#dcfce7;color:#15803d;}
+.seg-vacio{text-align:center;color:var(--texto-suave);font-size:14px;padding:26px;}
 </style>
 </head>
 <body>
@@ -340,6 +358,7 @@ tbody tr:hover{background:var(--gris-fondo);}
             <input type="text" id="acc-filtroResp" placeholder="Buscar responsable..." oninput="renderPlanAcciones()">
           </div>
           <button class="btn btn-verde btn-sm" onclick="exportarAccionesExcel()">📥 Exportar Plan de Acciones</button>
+          <button class="btn btn-azul btn-sm" onclick="exportarHallazgosVigentesAdmin()">📄 Hallazgos Vigentes (Formato Estándar)</button>
         </div>
        
         <p style="font-size:12px;color:var(--texto-suave);margin-bottom:10px;"><span id="acc-count">0</span> acciones · toca el estado para marcar como completado</p>
@@ -418,8 +437,16 @@ tbody tr:hover{background:var(--gris-fondo);}
     </div>
   </div>
 
-  <div class="container">
+    <div class="container">
     <div class="registrador-banner"><span style="font-size:20px;">👤</span><div><div class="rb-label">Auditoría registrada por</div><div class="rb-nombre" id="banner-nombre"></div></div></div>
+
+    <!-- SELECTOR DE VISTA -->
+    <div class="card" style="padding:10px;">
+      <div class="tipo-tabs">
+        <button type="button" class="tipo-tab-btn activo" id="vista-btn-auditoria" onclick="cambiarVista('auditoria')">📋 Realizar Auditoría</button>
+        <button type="button" class="tipo-tab-btn" id="vista-btn-seguimiento" onclick="cambiarVista('seguimiento')">🔎 Seguimiento de Hallazgos</button>
+      </div>
+    </div>
 
     <div id="wrapChecklist">
       <div class="card" style="padding:12px;">
@@ -436,10 +463,13 @@ tbody tr:hover{background:var(--gris-fondo);}
       <div class="card">
         <div class="card-titulo">📍 Datos de la Auditoría</div>
         <div class="grid2">
-                    <div class="campo">
+          <div class="campo">
             <label>Área</label>
             <select id="aud-area">
               <option value="">Selecciona área</option>
+              <option>A330</option><option>A350</option><option>ALMACENES</option><option>BOEING</option>
+              <option>COMAC</option><option>ENVIOS</option><option>FTF A220</option><option>LEGACY</option>
+              <option>METAL WORKS</option><option>MONUMENTOS</option><option>PROCESOS PRIMARIOS</option><option>SHIPLOOSE</option>
             </select>
           </div>
           <div class="campo"><label>Auditor</label><input type="text" id="aud-auditor" placeholder="Nombre del auditor"></div>
@@ -447,6 +477,18 @@ tbody tr:hover{background:var(--gris-fondo);}
         <div class="campo"><label>Proceso Auditado</label>
           <select id="aud-proceso">
             <option value="">Selecciona proceso</option>
+            <option>Laminado</option>
+            <option>Prensas</option>
+            <option>CNC</option>
+            <option>Maquinado</option>
+            <option>Insertos</option>
+            <option>Bondeo</option>
+            <option>Lijado y Pintura</option>
+            <option>Decorado</option>
+            <option>Ensamble Final</option>
+            <option>Test</option>
+            <option>Inspección Final</option>
+            <option>Envíos</option>
           </select>
         </div>
       </div>
@@ -454,6 +496,41 @@ tbody tr:hover{background:var(--gris-fondo);}
       <div class="card" style="text-align:center;">
         <button class="btn btn-verde btn-full" id="btnGuardarAuditoria" onclick="guardarAuditoria()">💾 Guardar Auditoría</button>
       </div>
+    </div>
+
+    <!-- SEGUIMIENTO DE HALLAZGOS (solo consulta) -->
+    <div id="wrapSeguimiento" style="display:none">
+      <div class="card">
+        <div class="card-titulo">🔎 Seguimiento de Hallazgos</div>
+        <p style="font-size:12.5px;color:var(--texto-suave);margin-bottom:12px;line-height:1.5;">
+          Consulta los hallazgos y acciones registrados en las auditorías y recorridos de cada área. Esta vista es solo de consulta.
+        </p>
+        <div class="grid2">
+          <div class="campo"><label>Área</label>
+            <select id="seg-area" onchange="cargarSeguimiento()"><option value="">Selecciona área</option></select>
+          </div>
+          <div class="campo"><label>Estado</label>
+            <select id="seg-estado" onchange="renderSeguimiento()">
+              <option value="vigentes">Vigentes (abiertos)</option>
+              <option value="vencidos">Solo vencidos</option>
+              <option value="cerrados">Cerrados</option>
+              <option value="todos">Todos</option>
+            </select>
+          </div>
+          <div class="campo"><label>Categoría</label>
+            <select id="seg-cat" onchange="renderSeguimiento()"><option value="">Todas</option></select>
+          </div>
+          <div class="campo"><label>Buscar</label>
+            <input type="text" id="seg-buscar" placeholder="Responsable, acción, descripción..." oninput="renderSeguimiento()">
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="btn btn-outline btn-sm" onclick="cargarSeguimiento()">🔄 Actualizar</button>
+          <button class="btn btn-verde btn-sm" onclick="exportarSeguimientoExcel()">📥 Exportar lo mostrado (Formato Estándar)</button>
+        </div>
+      </div>
+      <div class="seg-kpis" id="seg-kpis"></div>
+      <div id="seg-lista"><div class="card seg-vacio">Selecciona un área para ver sus hallazgos.</div></div>
     </div>
 
   </div>
@@ -695,13 +772,13 @@ async function confirmarLogin(){
 
 function logout(){
   usuarioActual = { numero:"", nombre:"" };
+  cambiarVista('auditoria');
   document.getElementById("appPrincipal").style.display = "none";
   document.getElementById("login-numero").value = "";
   document.getElementById("login-hint").innerText = "";
   document.getElementById("login-estado").innerText = "";
   document.getElementById("modalLogin").classList.add("abierto");
 }
-
 function inicializarFormulario(){
   renderTipoTabs();
   initResumenBarras();
@@ -905,6 +982,7 @@ async function guardarAuditoria(){
         const accionData = {
           auditoriaId: ref.id, tipo: tipoActual, area, categoria:r.categoria, preguntaId:r.id, preguntaTexto:r.pregunta,
           descripcion:a.descripcion, responsable:a.responsable, fechaLimite:a.fechaLimite,
+          comentario: r.comentario || "", foto: r.foto || "",
           estado:"pendiente", fecha:ahora, fechaStr, semana,
           numeroEmpleadoAuditor: usuarioActual.numero, nombreEmpleadoAuditor: usuarioActual.nombre, auditor
         };
@@ -1218,11 +1296,13 @@ async function verDetalleAuditoria(id){
 
 async function toggleEstadoAccion(id, el){
   const nuevo = el.classList.contains("completado") ? "pendiente" : "completado";
+  const fechaCierre = nuevo === "completado" ? hoyStr() : "";
   try {
-    await db.collection("acciones5s").doc(id).update({ estado: nuevo });
+    await db.collection("acciones5s").doc(id).update({ estado: nuevo, fechaCierre });
     el.classList.remove("pendiente","completado"); el.classList.add(nuevo);
     el.innerText = nuevo === "completado" ? "✅ Completado" : "⏳ Pendiente";
-    const a = STATE.acciones.find(x=>x.id===id); if (a) a.estado = nuevo;
+    const a = STATE.acciones.find(x=>x.id===id);
+    if (a){ a.estado = nuevo; a.fechaCierre = fechaCierre; }
     renderPlanAcciones();
   } catch(e){ notif("Error al actualizar acción: "+e.message, true); }
 }
@@ -1681,7 +1761,8 @@ async function exportarDetallePDF(){
   await exportarContenedorAPDF(headerEls, "detalle-body", `Auditoria_5S_${auditoriaParaDetallePPTX.area}_${auditoriaParaDetallePPTX.fechaStr}.pdf`, "btnPDFDetalle");
 }
 
-/* ====== EXPORTAR AUDITORÍA A POWERPOINT ====== */
+
+ 
 /* ====== EXPORTAR AUDITORÍA A POWERPOINT ====== */
 let pptxLibPromise = null;
 function cargarPptxGenJS(){
@@ -1893,6 +1974,343 @@ async function exportarDetalleActualPPTX(){
 
 initPreguntasAdminCats();
 setLoading(false);
+
+/* =========================================================
+   UTILIDADES DE HALLAZGOS
+   ========================================================= */
+function hoyStr(){
+  const d = new Date();
+  return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+}
+function fechaLocal(s){
+  if (!s) return null;
+  const [y,m,d] = String(s).split("-").map(Number);
+  return y ? new Date(y, m-1, d) : null;
+}
+function estadoHallazgo(a){
+  if (a.estado === "completado") return "cerrado";
+  if (a.fechaLimite && a.fechaLimite < hoyStr()) return "vencido";
+  return "abierto";
+}
+function fuenteHallazgo(a){
+  const cat = CAT_INFO[a.categoria]?.nombre || a.categoria || "";
+  if (a.tipo === "dinamico") return "Recorrido Experto 5S\n" + cat;
+  const t = (TIPOS_INFO[a.tipo]?.nombre || "").trim();
+  return "Auditoría 5S" + (t ? " " + t : "") + "\n" + cat;
+}
+function problemaHallazgo(a){
+  if (a.tipo === "dinamico") return a.preguntaTexto || a.descripcion || "";
+  if (a.comentario) return a.comentario;
+  const aud = (STATE.auditorias || []).find(x=>x.id===a.auditoriaId);
+  const r = aud?.respuestas?.find(x=>x.id===a.preguntaId);
+  if (r?.comentario) return r.comentario;
+  if (r && !r.cumple) return "No cumple: " + (a.preguntaTexto || "");
+  return a.preguntaTexto || "";
+}
+
+/* =========================================================
+   EXPORTAR EN FORMATO ESTÁNDAR "LISTA DE ACCIONES PARA MEJORAR"
+   ========================================================= */
+const AZUL_STD = "FF014491";
+// Opcional: sube tu logo a tu repositorio de GitHub Pages y pon aquí su URL (ej: "https://.../logo.jpg")
+const LOGO_URL = "";
+
+async function obtenerLogoBase64(){
+  if (!LOGO_URL) return null;
+  try {
+    const r = await fetch(LOGO_URL);
+    if (!r.ok) return null;
+    const b = await r.blob();
+    return await new Promise(res=>{
+      const fr = new FileReader();
+      fr.onload = ()=>res(fr.result); fr.onerror = ()=>res(null);
+      fr.readAsDataURL(b);
+    });
+  } catch(e){ return null; }
+}
+function fechaExcel(s){
+  const f = fechaLocal(s);
+  return f ? new Date(Date.UTC(f.getFullYear(), f.getMonth(), f.getDate())) : null;
+}
+function fechaExcelDe(obj){
+  const f = fechaDe(obj);
+  return isNaN(f) ? null : new Date(Date.UTC(f.getFullYear(), f.getMonth(), f.getDate()));
+}
+// Da estilo a un rango, lo combina y escribe el valor
+function bloqueXL(ws, c1, r1, c2, r2, valor, est){
+  const C1 = c1.charCodeAt(0)-64, C2 = c2.charCodeAt(0)-64;
+  const b = est.borde || {};
+  for (let r=r1; r<=r2; r++){
+    for (let c=C1; c<=C2; c++){
+      const cell = ws.getCell(r, c);
+      cell.font = est.font;
+      if (est.fill) cell.fill = est.fill;
+      cell.alignment = est.alignment || { horizontal:"center", vertical:"middle", wrapText:true };
+      if (est.numFmt) cell.numFmt = est.numFmt;
+      cell.border = {
+        left:   { style: c===C1 ? (b.l||"thin") : "thin" },
+        right:  { style: c===C2 ? (b.r||"thin") : "thin" },
+        top:    { style: r===r1 ? (b.t||"thin") : "thin" },
+        bottom: { style: r===r2 ? (b.b||"thin") : "thin" }
+      };
+    }
+  }
+  if (C1!==C2 || r1!==r2) ws.mergeCells(r1, C1, r2, C2);
+  ws.getCell(r1, C1).value = valor;
+}
+
+async function exportarFormatoEstandar(lista, nombreArchivo, subtitulo){
+  if (typeof ExcelJS === "undefined") return notif("No se pudo cargar ExcelJS, revisa tu conexión", true);
+  if (!lista.length) return notif("No hay hallazgos para exportar", true);
+  setLoading(true, "Generando Excel en formato estándar...");
+  try {
+    const wb = new ExcelJS.Workbook();
+    wb.creator = "Auditoría 5S";
+    const logo = await obtenerLogoBase64();
+    const logoId = logo ? wb.addImage({ base64: logo, extension: logo.includes("image/png") ? "png" : "jpeg" }) : null;
+
+    const porArea = {};
+    lista.forEach(a=>{ const k = a.area || "SIN AREA"; (porArea[k] = porArea[k] || []).push(a); });
+
+    const blanco = { argb:"FFFFFFFF" };
+    const fillAzul = { type:"pattern", pattern:"solid", fgColor:{ argb:AZUL_STD } };
+    const usados = new Set();
+    const hoyTxt = new Date().toLocaleDateString();
+
+    Object.keys(porArea).sort().forEach(area=>{
+      let nombreHoja = area.replace(/[\\\/\?\*\[\]:]/g,"-").substring(0,31);
+      while (usados.has(nombreHoja)) nombreHoja = nombreHoja.substring(0,27) + "_" + usados.size;
+      usados.add(nombreHoja);
+
+      const ws = wb.addWorksheet(nombreHoja, {
+        pageSetup:{ orientation:"landscape", fitToPage:true, fitToWidth:1, fitToHeight:0,
+          margins:{ left:.25, right:.25, top:.4, bottom:.4, header:.2, footer:.2 } },
+        views:[{ showGridLines:false }]
+      });
+      // Anchos de columna A..Q (basados en la plantilla)
+      ws.columns = [3.3,30.7,30,11.7,12.6,8.7,8.7,28.3,8.7,5,8.7,8.7,33.9,36,28,26,3.4].map(w=>({ width:w }));
+
+      // Logo (opcional)
+      if (logoId !== null){
+        ws.getRow(1).height = 42;
+        ws.addImage(logoId, { tl:{ col:0.15, row:0.1 }, ext:{ width:250, height:52 } });
+      }
+
+      // Título B2:P4
+      bloqueXL(ws, "B",2, "P",4, "LISTA DE ACCIONES PARA MEJORAR", {
+        font:{ name:"Calibri", size:26, bold:true, color:blanco }, fill:fillAzul,
+        borde:{ l:"medium", r:"medium", t:"medium", b:"medium" }
+      });
+
+      // Fila 5: datos del reporte
+      ws.mergeCells("B5:P5");
+      const info = ws.getCell("B5");
+      info.value = `ÁREA: ${area}     ·     ${subtitulo || "Hallazgos"}     ·     Generado: ${hoyTxt}     ·     Total: ${porArea[area].length}`;
+      info.font = { name:"Calibri", size:12, bold:true, color:{ argb:AZUL_STD } };
+      info.alignment = { horizontal:"left", vertical:"middle" };
+      ws.getRow(5).height = 22;
+
+      // Encabezados filas 6-7
+      const hdr = { font:{ name:"Calibri", size:20, bold:true, color:blanco }, fill:fillAzul };
+      bloqueXL(ws, "B",6, "B",7, "FECHA DE HALLAZGO",        { ...hdr, borde:{ l:"medium", t:"medium" } });
+      bloqueXL(ws, "C",6, "C",7, "FUENTE DEL HALLAZGO",      { ...hdr, borde:{ t:"medium" } });
+      bloqueXL(ws, "D",6, "H",7, "DESCRIPCION DEL PROBLEMA", { ...hdr, borde:{ t:"medium" } });
+      bloqueXL(ws, "I",6, "M",7, "ACCION",                   { ...hdr, borde:{ t:"medium" } });
+      bloqueXL(ws, "N",6, "N",7, "RESPONSABLE",              { ...hdr, borde:{ t:"medium" } });
+      bloqueXL(ws, "O",6, "O",7, "FECHA COMPROMISO",         { ...hdr, borde:{ t:"medium" } });
+      bloqueXL(ws, "P",6, "P",7, "FECHA DE CIERRE",          { ...hdr, borde:{ r:"medium", t:"medium" } });
+      ws.getRow(6).height = 26; ws.getRow(7).height = 26;
+
+      // Datos: cada hallazgo usa 2 filas combinadas
+      const items = porArea[area].slice().sort((a,b)=>(a.fechaLimite||"9999").localeCompare(b.fechaLimite||"9999"));
+      let r = 8;
+      items.forEach((a, i)=>{
+        const bb = i === items.length-1 ? "medium" : "thin";
+        const est = estadoHallazgo(a);
+        const fNormal = { name:"Calibri", size:12, color:{ argb:"FF000000" } };
+        const fRojo   = { name:"Calibri", size:12, bold:true, color:{ argb:"FFDC2626" } };
+        const izq = { horizontal:"left", vertical:"middle", wrapText:true };
+        const problema = problemaHallazgo(a);
+        const accion = a.descripcion || "";
+
+        bloqueXL(ws, "B",r, "B",r+1, fechaExcelDe(a.fecha), { font:fNormal, numFmt:"dd/mm/yyyy", borde:{ l:"medium", b:bb } });
+        bloqueXL(ws, "C",r, "C",r+1, fuenteHallazgo(a),     { font:fNormal, borde:{ b:bb } });
+        bloqueXL(ws, "D",r, "H",r+1, problema,              { font:fNormal, alignment:izq, borde:{ b:bb } });
+        bloqueXL(ws, "I",r, "M",r+1, accion,                { font:fNormal, alignment:izq, borde:{ b:bb } });
+        bloqueXL(ws, "N",r, "N",r+1, a.responsable || "",   { font:fNormal, borde:{ b:bb } });
+        bloqueXL(ws, "O",r, "O",r+1, fechaExcel(a.fechaLimite), { font: est==="vencido" ? fRojo : fNormal, numFmt:"dd/mm/yyyy", borde:{ b:bb } });
+        bloqueXL(ws, "P",r, "P",r+1, a.estado==="completado" ? (fechaExcel(a.fechaCierre) || "Cerrado") : "",
+                 { font:fNormal, numFmt:"dd/mm/yyyy", borde:{ r:"medium", b:bb } });
+
+        const lineas = Math.max(3, Math.ceil(problema.length/65), Math.ceil(accion.length/60));
+        const alto = Math.max(25, Math.ceil(lineas*16/2) + 4);
+        ws.getRow(r).height = alto; ws.getRow(r+1).height = alto;
+        r += 2;
+      });
+
+      ws.pageSetup.printArea = `A1:Q${r}`;
+      ws.pageSetup.printTitlesRow = "6:7";
+    });
+
+    const buf = await wb.xlsx.writeBuffer();
+    const blob = new Blob([buf], { type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url; link.download = nombreArchivo;
+    document.body.appendChild(link); link.click(); link.remove();
+    setTimeout(()=>URL.revokeObjectURL(url), 3000);
+    notif("Excel exportado ✅ (" + lista.length + " hallazgos)");
+  } catch(e){
+    console.error(e);
+    notif("Error generando Excel: " + e.message, true);
+  } finally {
+    setLoading(false);
+  }
+}
+
+// Botón del panel Admin (Plan de Acciones)
+function exportarHallazgosVigentesAdmin(){
+  if (!STATE.adminCargado) return notif("Primero abre el panel de administración", true);
+  const filArea = document.getElementById("acc-filtroArea").value;
+  const filResp = (document.getElementById("acc-filtroResp").value || "").toLowerCase().trim();
+  let lista = STATE.acciones.filter(a=>a.estado !== "completado");
+  if (filArea) lista = lista.filter(a=>a.area === filArea);
+  if (filResp) lista = lista.filter(a=>(a.responsable||"").toLowerCase().includes(filResp));
+  exportarFormatoEstandar(lista, `Hallazgos_Vigentes_5S_${(filArea||"Todas").replace(/\s+/g,"_")}_${hoyStr()}.xlsx`, "Hallazgos vigentes");
+}
+
+/* =========================================================
+   SEGUIMIENTO DE HALLAZGOS (usuarios, solo consulta)
+   ========================================================= */
+const SEG = { acciones:[], area:"", iniciado:false };
+
+function cambiarVista(v){
+  document.getElementById("wrapChecklist").style.display   = v==="auditoria"   ? "block" : "none";
+  document.getElementById("wrapSeguimiento").style.display = v==="seguimiento" ? "block" : "none";
+  document.getElementById("vista-btn-auditoria").classList.toggle("activo", v==="auditoria");
+  document.getElementById("vista-btn-seguimiento").classList.toggle("activo", v==="seguimiento");
+  if (v==="seguimiento" && !SEG.iniciado) initSeguimiento();
+  window.scrollTo({ top:0, behavior:"smooth" });
+}
+
+function initSeguimiento(){
+  SEG.iniciado = true;
+  document.getElementById("seg-area").innerHTML =
+    '<option value="">Selecciona área</option><option value="__todas">Todas las áreas</option>' +
+    AREAS_5S.map(a=>`<option value="${a}">${a}</option>`).join("");
+  document.getElementById("seg-cat").innerHTML =
+    '<option value="">Todas</option>' +
+    Object.keys(CAT_INFO).map(c=>`<option value="${c}">${CAT_INFO[c].nombre}</option>`).join("");
+}
+
+async function cargarSeguimiento(){
+  const area = document.getElementById("seg-area").value;
+  SEG.area = area;
+  if (!area){ SEG.acciones = []; renderSeguimiento(); return; }
+  setLoading(true, "Cargando hallazgos...");
+  try {
+    const snap = area === "__todas"
+      ? await db.collection("acciones5s").orderBy("fecha","desc").limit(1000).get()
+      : await db.collection("acciones5s").where("area","==",area).get();
+    SEG.acciones = snap.docs.map(d=>({ id:d.id, ...d.data() }));
+  } catch(e){
+    console.error(e);
+    notif("Error cargando hallazgos: " + e.message, true);
+    SEG.acciones = [];
+  } finally {
+    setLoading(false);
+  }
+  renderSeguimiento();
+}
+
+function getSeguimientoFiltrado(){
+  const est = document.getElementById("seg-estado").value;
+  const cat = document.getElementById("seg-cat").value;
+  const q = (document.getElementById("seg-buscar").value || "").toLowerCase().trim();
+  const lista = SEG.acciones.filter(a=>{
+    const e = estadoHallazgo(a);
+    if (est==="vigentes" && e==="cerrado") return false;
+    if (est==="vencidos" && e!=="vencido") return false;
+    if (est==="cerrados" && e!=="cerrado") return false;
+    if (cat && a.categoria !== cat) return false;
+    if (q){
+      const txt = [a.descripcion, a.responsable, a.preguntaTexto, a.comentario, a.auditor, a.area].join(" ").toLowerCase();
+      if (!txt.includes(q)) return false;
+    }
+    return true;
+  });
+  const peso = { vencido:0, abierto:1, cerrado:2 };
+  lista.sort((a,b)=>(peso[estadoHallazgo(a)] - peso[estadoHallazgo(b)]) ||
+                    (a.fechaLimite||"9999").localeCompare(b.fechaLimite||"9999"));
+  return lista;
+}
+
+function renderSeguimiento(){
+  const cont = document.getElementById("seg-lista");
+  const kpis = document.getElementById("seg-kpis");
+  if (!SEG.area){
+    kpis.innerHTML = "";
+    cont.innerHTML = `<div class="card seg-vacio">Selecciona un área para ver sus hallazgos.</div>`;
+    return;
+  }
+  const todos = SEG.acciones;
+  const abiertos = todos.filter(a=>estadoHallazgo(a)!=="cerrado").length;
+  const vencidos = todos.filter(a=>estadoHallazgo(a)==="vencido").length;
+  const cerrados = todos.length - abiertos;
+  const pct = todos.length ? Math.round(cerrados / todos.length * 100) : 0;
+  kpis.innerHTML = `
+    <div class="seg-kpi" style="border-top-color:#f59e0b"><div class="seg-kpi-num">${abiertos}</div><div class="seg-kpi-lbl">Vigentes</div></div>
+    <div class="seg-kpi" style="border-top-color:#dc2626"><div class="seg-kpi-num" style="color:#dc2626">${vencidos}</div><div class="seg-kpi-lbl">Vencidos</div></div>
+    <div class="seg-kpi" style="border-top-color:#16a34a"><div class="seg-kpi-num" style="color:#16a34a">${cerrados}</div><div class="seg-kpi-lbl">Cerrados</div></div>
+    <div class="seg-kpi" style="border-top-color:#2563eb"><div class="seg-kpi-num" style="color:${gaugeColor(pct)}">${pct}%</div><div class="seg-kpi-lbl">% Cierre</div></div>`;
+
+  const lista = getSeguimientoFiltrado();
+  if (!lista.length){
+    cont.innerHTML = `<div class="card seg-vacio">No hay hallazgos con los filtros seleccionados 🎉</div>`;
+    return;
+  }
+  const hoy = hoyStr();
+  cont.innerHTML = `<p style="font-size:12px;color:var(--texto-suave);margin-bottom:10px;">${lista.length} hallazgo(s) mostrados</p>` +
+    lista.map(a=>{
+      const info = CAT_INFO[a.categoria] || { nombre:a.categoria||"-", color:"#64748b" };
+      const e = estadoHallazgo(a);
+      let badge;
+      if (e === "cerrado") badge = `<span class="seg-badge cerrado">✅ Cerrado${a.fechaCierre ? " · " + a.fechaCierre : ""}</span>`;
+      else if (e === "vencido"){
+        const dias = Math.round((fechaLocal(hoy) - fechaLocal(a.fechaLimite)) / 86400000);
+        badge = `<span class="seg-badge vencido">⚠ Vencido hace ${dias} día(s)</span>`;
+      } else badge = `<span class="seg-badge abierto">⏳ Abierto</span>`;
+      const f = fechaDe(a.fecha);
+      return `
+      <div class="seg-card" style="border-left-color:${info.color}">
+        <div class="seg-head">
+          <span class="cat-badge" style="background:${info.color}22;color:${info.color}">${info.nombre}</span>
+          ${badge}
+        </div>
+        <div class="seg-label">Descripción del problema</div>
+        <div class="seg-txt">${escapeHTML(problemaHallazgo(a))}</div>
+        <div class="seg-label">Acción</div>
+        <div class="seg-txt"><b>${escapeHTML(a.descripcion || "—")}</b></div>
+        ${a.foto ? `<img src="${a.foto}" class="detalle-foto" onclick="window.open('${a.foto}','_blank')">` : ""}
+        <div class="seg-meta">
+          ${SEG.area === "__todas" ? `<span class="acc-resp-tag">📍 ${escapeHTML(a.area)}</span>` : ""}
+          <span class="acc-resp-tag">👤 ${escapeHTML(a.responsable || "Sin responsable")}</span>
+          <span class="acc-fecha-tag">📅 Compromiso: ${a.fechaLimite || "-"}</span>
+          <span class="acc-fecha-tag">🔍 ${escapeHTML(fuenteHallazgo(a).split("\n")[0])} · ${f.toLocaleDateString()}</span>
+        </div>
+      </div>`;
+    }).join("");
+}
+
+function exportarSeguimientoExcel(){
+  if (!SEG.area) return notif("Selecciona un área primero", true);
+  const sel = document.getElementById("seg-estado");
+  const nombreArea = SEG.area === "__todas" ? "Todas" : SEG.area;
+  exportarFormatoEstandar(getSeguimientoFiltrado(),
+    `Hallazgos_5S_${nombreArea.replace(/\s+/g,"_")}_${hoyStr()}.xlsx`,
+    sel.options[sel.selectedIndex].text);
+}
+ 
 </script>
 </body>
 </html>
