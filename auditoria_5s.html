@@ -2075,7 +2075,11 @@ async function exportarFormatoEstandar(lista, nombreArchivo, subtitulo){
 
       const ws = wb.addWorksheet(nombreHoja, {
         pageSetup:{ orientation:"landscape", fitToPage:true, fitToWidth:1, fitToHeight:0,
-          margins:{ left:.25, right:.25, top:.4, bottom:.4, header:.2, footer:.2 } },
+          margins:{ left:.25, right:.25, top:.4, bottom:.6, header:.2, footer:.3 } },
+        headerFooter:{
+          oddFooter:  "&L&\"Calibri,Bold\"CDFS-AD-OPEX-W1-F2&RPágina &P de &N",
+          evenFooter: "&L&\"Calibri,Bold\"CDFS-AD-OPEX-W1-F2&RPágina &P de &N"
+        },
         views:[{ showGridLines:false }]
       });
       // Anchos de columna A..Q (basados en la plantilla)
@@ -2138,6 +2142,14 @@ async function exportarFormatoEstandar(lista, nombreArchivo, subtitulo){
         ws.getRow(r).height = alto; ws.getRow(r+1).height = alto;
         r += 2;
       });
+
+      r += 1;
+      ws.mergeCells(`B${r}:P${r}`);
+      const pie = ws.getCell(`B${r}`);
+      pie.value = "CDFS-AD-OPEX-W1-F2";
+      pie.font = { name:"Calibri", size:11, bold:true, color:{ argb:"FF000000" } };
+      pie.alignment = { horizontal:"right", vertical:"middle" };
+      ws.getRow(r).height = 20;
 
       ws.pageSetup.printArea = `A1:Q${r}`;
       ws.pageSetup.printTitlesRow = "6:7";
