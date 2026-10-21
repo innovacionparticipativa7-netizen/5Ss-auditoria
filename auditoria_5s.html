@@ -14,7 +14,7 @@
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
  <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
-<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;900&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;900&family=Barlow:wght@300;400;500;600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
  
 
 <style>
@@ -178,6 +178,14 @@ tbody tr:hover{background:var(--gris-fondo);}
 .seg-badge.vencido{background:#fee2e2;color:#b91c1c;}
 .seg-badge.cerrado{background:#dcfce7;color:#15803d;}
 .seg-vacio{text-align:center;color:var(--texto-suave);font-size:14px;padding:26px;}
+
+/* ===== Tipografía legible en dashboard admin ===== */
+#adminPanelBody .card-titulo{font-family:'Inter',sans-serif;font-weight:600;font-size:15px;letter-spacing:0;}
+#adminPanelBody .gauge-wrap .card-titulo{font-size:13px;color:var(--texto-suave);letter-spacing:.3px;}
+#adminPanelBody .gauge-pct{font-family:'Inter',sans-serif;font-weight:500;font-variant-numeric:tabular-nums;letter-spacing:-.5px;}
+#adminPanelBody #pct-general5s{font-size:30px;font-weight:600;}
+
+ 
 </style>
 </head>
 <body>
