@@ -554,7 +554,10 @@ firebase.initializeApp({
   appId: "1:569424923910:web:f5fa687b91edf88789e287"
 });
 const db = firebase.firestore();
-
+Chart.defaults.font.family = "'Inter', 'Barlow', sans-serif";
+Chart.defaults.font.size = 12;
+Chart.defaults.font.weight = 400;
+Chart.defaults.color = "#475569";
 const CLOUDINARY_CLOUD_NAME   = "dc9wxwria";
 const CLOUDINARY_UPLOAD_PRESET = "auditoria_5s";
 const ADMIN_PASSWORD = "5S2026";
@@ -1224,7 +1227,7 @@ function actualizarGraficaArea(lista){
           display: ctx => ctx.dataset.data[ctx.dataIndex] > 0,
           anchor:"end", align:"top", offset:2,
           color:"#0f172a",
-          font:{ family:"'Barlow Condensed', sans-serif", weight:800, size:13 },
+          font:{ family:"'Inter', sans-serif", weight:500, size:12 },
           formatter:v=>v+"%"
         }
       }
@@ -1251,7 +1254,7 @@ function actualizarGraficaTendencia(lista){
         datalabels:{
           anchor:"end", align:"top", offset:4,
           color:"#1e3a8a",
-          font:{ family:"'Barlow Condensed', sans-serif", weight:800, size:13 },
+          font:{ family:"'Inter', sans-serif", weight:500, size:12 },
           formatter:v=>v+"%"
         }
       }
