@@ -184,7 +184,16 @@ tbody tr:hover{background:var(--gris-fondo);}
 #adminPanelBody .gauge-wrap .card-titulo{font-size:13px;color:var(--texto-suave);letter-spacing:.3px;}
 #adminPanelBody .gauge-pct{font-family:'Inter',sans-serif;font-weight:500;font-variant-numeric:tabular-nums;letter-spacing:-.5px;}
 #adminPanelBody #pct-general5s{font-size:30px;font-weight:600;}
-
+/* ===== PROMEDIO MENSUAL ===== */
+.mensual-toggle{display:flex;justify-content:space-between;align-items:center;cursor:pointer;user-select:none;}
+.mensual-toggle:hover .card-titulo{color:var(--azul-medio);}
+.mensual-arrow{font-size:12px;color:var(--texto-suave);transition:transform .2s;}
+.mensual-arrow.abierto{transform:rotate(180deg);}
+.mensual-body{display:none;margin-top:14px;}
+.mensual-body.abierto{display:block;}
+.var-up{color:#16a34a;font-weight:700;}
+.var-down{color:#dc2626;font-weight:700;}
+.var-eq{color:var(--texto-suave);}
  
 </style>
 </head>
@@ -339,6 +348,22 @@ tbody tr:hover{background:var(--gris-fondo);}
         </div>
         <div class="card"><div class="card-titulo">📊 Score General Promedio por Área</div><canvas id="graficaArea5s" height="100"></canvas></div>
         <div class="card"><div class="card-titulo">📈 Tendencia Semanal</div><canvas id="graficaTendencia5s" height="100"></canvas></div>
+       <div class="card">
+  <div class="mensual-toggle" onclick="toggleMensual()">
+    <div class="card-titulo" style="margin-bottom:0;">🗓️ Promedio Mensual <span id="mensual-count" style="font-size:12px;color:var(--texto-suave);font-weight:400;margin-left:6px;"></span></div>
+    <span class="mensual-arrow" id="mensual-arrow">▼</span>
+  </div>
+  <div class="mensual-body" id="mensualBody">
+    <canvas id="graficaMensual5s" height="100"></canvas>
+    <div class="table-wrap" style="margin-top:14px;max-height:none;">
+      <table>
+        <thead><tr><th>Mes</th><th>Auditorías</th><th>1S</th><th>2S</th><th>3S</th><th>4S</th><th>5S</th><th>General</th><th>vs mes anterior</th></tr></thead>
+        <tbody id="tablaMensual5s"></tbody>
+      </table>
+    </div>
+    <button class="btn btn-verde btn-sm" style="margin-top:12px;" onclick="exportarMensualExcel()">📥 Exportar Promedio Mensual</button>
+  </div>
+</div>
         <div class="card" style="display:flex;gap:10px;flex-wrap:wrap;">
           <button class="btn btn-verde" onclick="exportarAuditoriasExcel()">📥 Exportar Auditorías</button>
           <button class="btn btn-azul" onclick="exportarDetalleExcel()">📥 Exportar Detalle Completo</button>
@@ -1182,6 +1207,7 @@ function renderGauge(cid, valor, pctId){
 function actualizarDashboard(){
   const lista = getAuditoriasFiltradas();
   document.getElementById("dash-count").textContent = `(${lista.length} auditorías)`;
+   renderMensual();
   if (!lista.length){
     renderGauge("gaugeGeneral5s", 0, "pct-general5s");
     Object.keys(CAT_INFO).forEach(c=>renderGauge("gauge-"+c, 0, "pct-"+c));
@@ -1445,7 +1471,126 @@ function cambiarTipoAdminPreguntas(tipo){
   renderPreguntasTipoTabs();
   dibujarPreguntasAdmin();
 }
+/* =========================================================
+   PROMEDIO MENSUAL (Dashboard admin)
+   ========================================================= */
+let chartMensual = null;
+let mensualAbierto = false;
+const MESES_ES = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
 
+function toggleMensual(){
+  mensualAbierto = !mensualAbierto;
+  document.getElementById("mensualBody").classList.toggle("abierto", mensualAbierto);
+  document.getElementById("mensual-arrow").classList.toggle("abierto", mensualAbierto);
+  if (mensualAbierto) renderMensual();
+}
+
+function calcularPromedioMensual(lista){
+  const porMes = {};
+  lista.forEach(a=>{
+    const f = fechaDe(a.fecha);
+    if (isNaN(f)) return;
+    const key = f.getFullYear() + "-" + String(f.getMonth()+1).padStart(2,"0");
+    (porMes[key] = porMes[key] || []).push(a);
+  });
+  const prom = vals => vals.length ? Math.round(vals.reduce((s,v)=>s+v,0)/vals.length) : null;
+  return Object.keys(porMes).sort().map(key=>{
+    const auds = porMes[key];
+    const cats = {};
+    Object.keys(CAT_INFO).forEach(c=>{
+      cats[c] = prom(auds.map(a=>a.scorePorCategoria?.[c]).filter(v=>v!=null));
+    });
+    const [y,m] = key.split("-").map(Number);
+    return {
+      key,
+      label: MESES_ES[m-1] + " " + y,
+      total: auds.length,
+      cats,
+      general: prom(auds.map(a=>a.scoreGeneral||0))
+    };
+  });
+}
+
+function renderMensual(){
+  if (!mensualAbierto) return;
+  const datos = calcularPromedioMensual(getAuditoriasFiltradas());
+  document.getElementById("mensual-count").textContent = `(${datos.length} mes${datos.length===1?"":"es"})`;
+
+  // ---- Gráfica ----
+  const ctx = document.getElementById("graficaMensual5s").getContext("2d");
+  if (chartMensual) chartMensual.destroy();
+  chartMensual = new Chart(ctx, {
+    type:"bar",
+    data:{
+      labels: datos.map(d=>d.label),
+      datasets:[{
+        label:"Score General Promedio %",
+        data: datos.map(d=>d.general),
+        backgroundColor: datos.map(d=>gaugeColor(d.general)+"cc"),
+        borderRadius:6
+      }]
+    },
+    options:{
+      responsive:true,
+      layout:{ padding:{ top:26 } },
+      scales:{ y:{ min:0, max:100, ticks:{ callback:v=>v+"%" } } },
+      plugins:{
+        legend:{ display:false },
+        tooltip:{ callbacks:{ afterLabel: c => `${datos[c.dataIndex].total} auditoría(s)` } },
+        datalabels:{
+          anchor:"end", align:"top", offset:2,
+          color:"#0f172a",
+          font:{ family:"'Inter', sans-serif", weight:500, size:12 },
+          formatter:v=>v+"%"
+        }
+      }
+    },
+    plugins:[ChartDataLabels]
+  });
+
+  // ---- Tabla (mes más reciente arriba) ----
+  const tbody = document.getElementById("tablaMensual5s");
+  if (!datos.length){
+    tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:var(--texto-suave);padding:18px;">Sin auditorías con los filtros seleccionados</td></tr>`;
+    return;
+  }
+  const celda = v => v==null ? `<td>-</td>` : `<td style="color:${gaugeColor(v)};font-weight:600;">${v}%</td>`;
+  tbody.innerHTML = datos.map((d,i)=>{
+    let varHTML = `<span class="var-eq">—</span>`;
+    if (i > 0){
+      const diff = d.general - datos[i-1].general;
+      varHTML = diff > 0 ? `<span class="var-up">▲ +${diff} pts</span>`
+              : diff < 0 ? `<span class="var-down">▼ ${diff} pts</span>`
+              : `<span class="var-eq">= 0 pts</span>`;
+    }
+    return `<tr>
+      <td><b>${d.label}</b></td>
+      <td>${d.total}</td>
+      ${Object.keys(CAT_INFO).map(c=>celda(d.cats[c])).join("")}
+      <td><b style="color:${gaugeColor(d.general)}">${d.general}%</b></td>
+      <td>${varHTML}</td>
+    </tr>`;
+  }).reverse().join("");
+}
+
+function exportarMensualExcel(){
+  const datos = calcularPromedioMensual(getAuditoriasFiltradas());
+  if (!datos.length) return notif("No hay datos mensuales para exportar", true);
+  const rows = datos.map((d,i)=>({
+    Mes: d.label,
+    "Auditorías": d.total,
+    "1S%": d.cats["1S"] ?? "", "2S%": d.cats["2S"] ?? "", "3S%": d.cats["3S"] ?? "",
+    "4S%": d.cats["4S"] ?? "", "5S%": d.cats["5S"] ?? "",
+    "General%": d.general,
+    "Variación vs mes anterior (pts)": i>0 ? d.general - datos[i-1].general : ""
+  }));
+  const ws = XLSX.utils.json_to_sheet(rows);
+  ws["!cols"] = [{wch:12},{wch:12},{wch:8},{wch:8},{wch:8},{wch:8},{wch:8},{wch:10},{wch:28}];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Promedio_Mensual");
+  XLSX.writeFile(wb, `Promedio_Mensual_5S_${new Date().toISOString().slice(0,10)}.xlsx`);
+  notif("Excel exportado ✅");
+}
 function initPreguntasAdminCats(){
   renderPreguntasTipoTabs();
   const cont = document.getElementById("preguntasAdminCats");
